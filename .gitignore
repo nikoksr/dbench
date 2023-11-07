@@ -1,0 +1,30 @@
+.idea/
+.vscode/
+tmp/
+
+# Files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.iml
+*.db
+*.png
+*.dat
+
+todo.md
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+go.work
+
+# Ignore everything in /ent directory except for the ent/schema folder and the ent/entc.go file
+ent/*
+!ent/schema
+!ent/generate.go

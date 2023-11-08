@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
-	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+
+	"github.com/spf13/cobra"
+
+	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
 )
 
 var resultsDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)
@@ -18,7 +20,7 @@ var requiredEnv = map[string]string{
 	# Example
 	export PGPASSWORD=supersecret
 
-For more information, see the official documentation: 
+For more information, see the official documentation:
 https://www.postgresql.org/docs/current/libpq-envars.html
 `,
 }
@@ -37,7 +39,7 @@ var requiredTools = map[string]string{
 	# macOS
 	brew install postgresql
 
-For more information, see the official documentation:  
+For more information, see the official documentation:
 https://www.postgresql.org/docs/current/pgbench.html
 `,
 	"gnuplot": `gnuplot is required to run the application. It can be installed with the following command:
@@ -79,12 +81,17 @@ func validateRequirements() error {
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:           buildinfo.AppName + " [command]",
-		Short:         "A nifty wrapper around pgbench that comes with plotting and result management.",
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		Version:       buildinfo.Version,
+		Use:               buildinfo.AppName + " [command]",
+		Short:             "A nifty wrapper around pgbench that comes with plotting and result management.",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		Args:              cobra.NoArgs,
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Version:           buildinfo.Version,
 	}
+
+	// Print the version number without the app name
+	cmd.SetVersionTemplate("{{.Version}}")
 
 	// Subcommands
 	cmd.AddCommand(

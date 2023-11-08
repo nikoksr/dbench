@@ -2,19 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
 	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
 	"github.com/nikoksr/go-pgbench/pkg/database"
 	"github.com/nikoksr/go-pgbench/pkg/export"
 	"github.com/nikoksr/go-pgbench/pkg/plot"
-	"github.com/spf13/cobra"
-	"os"
 )
 
 func newPlotCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "plot [result-group ID]",
-		Short: "Plot results produced by the bench command",
-		Args:  cobra.ExactArgs(1),
+		Use:               "plot [result-group ID]",
+		Short:             "Plot results produced by the bench command",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return validateRequirements()
 		},

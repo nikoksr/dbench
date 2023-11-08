@@ -1,23 +1,23 @@
 package cmd
 
 import (
-	"entgo.io/ent/dialect/sql"
 	"fmt"
-	"github.com/nikoksr/go-pgbench/ent"
-	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
-	"github.com/nikoksr/go-pgbench/pkg/export"
-	"github.com/nikoksr/go-pgbench/pkg/ui"
 	"strings"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/spf13/cobra"
 	typeid "go.jetpack.io/typeid/typed"
 
+	"github.com/nikoksr/go-pgbench/ent"
 	"github.com/nikoksr/go-pgbench/ent/schema/duration"
 	"github.com/nikoksr/go-pgbench/ent/schema/pulid"
 	"github.com/nikoksr/go-pgbench/pkg/benchmark"
+	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
 	"github.com/nikoksr/go-pgbench/pkg/database"
+	"github.com/nikoksr/go-pgbench/pkg/export"
 	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/go-pgbench/pkg/ui"
 )
 
 func newBenchCommand() *cobra.Command {
@@ -25,8 +25,12 @@ func newBenchCommand() *cobra.Command {
 	var benchConfig models.BenchmarkConfig
 
 	cmd := &cobra.Command{
-		Use:   "bench [command]",
-		Short: "Manage and run your database benchmarks.",
+		Use:               "bench [command]",
+		Short:             "Manage and run your database benchmarks.",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		Args:              cobra.NoArgs,
+		ValidArgsFunction: cobra.NoFileCompletions,
 	}
 
 	// Define flags for database connection parameters
@@ -65,9 +69,11 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	var clients []int
 
 	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run an array of benchmarks against a PostgreSQL database",
-		Long:  ``,
+		Use:               "run",
+		Short:             "Run an array of benchmarks against a PostgreSQL database",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		ValidArgsFunction: cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return validateRequirements()
 		},
@@ -126,6 +132,7 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 	return cmd
 }
+
 func newBenchInitCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -140,6 +147,9 @@ For consistency reasons, it is HIGHLY recommended to use this command instead of
 For more information, see the official documentation:
 https://www.postgresql.org/docs/current/pgbench.html
 `,
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		ValidArgsFunction: cobra.NoFileCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return benchmark.Init(benchConfig)
 		},
@@ -178,10 +188,13 @@ func newBenchListCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	var sort []string
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Aliases: []string{"ls"},
-		Short:   "List all benchmark results",
-		Args:    cobra.NoArgs,
+		Use:               "list",
+		Aliases:           []string{"ls"},
+		Short:             "List all benchmark results",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		Args:              cobra.NoArgs,
+		ValidArgsFunction: cobra.NoFileCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
@@ -225,9 +238,12 @@ func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	var format string
 
 	cmd := &cobra.Command{
-		Use:   "export",
-		Short: "Export all benchmark results to a format of your choice",
-		Args:  cobra.NoArgs,
+		Use:               "export",
+		Short:             "Export all benchmark results to a format of your choice",
+		SilenceUsage:      true,
+		SilenceErrors:     true,
+		Args:              cobra.NoArgs,
+		ValidArgsFunction: cobra.NoFileCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()

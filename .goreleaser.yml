@@ -7,16 +7,13 @@ env:
 
 before:
   hooks:
-    - go mod tidy
     - go generate ./...
+    - go mod tidy
     - ./scripts/completions.sh
 
 # Used when you want to create a pre-release.
 snapshot:
   name_template: "snapshot-{{ .ShortCommit }}"
-
-gomod:
-  proxy: true
 
 report_sizes: true
 

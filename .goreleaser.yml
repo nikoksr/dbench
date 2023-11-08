@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=jcroql
+version: 1
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod tidy
+    - ./scripts/completions.sh
+
+# Used when you want to create a pre-release.
+snapshot:
+  name_template: "snapshot-{{ .ShortCommit }}"
+
+gomod:
+  proxy: true
+
+report_sizes: true
+
+# Build customization
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+    binary: dbench
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X github.com/nikoksr/dbench/pkg/buildinfo.Version={{ .Version }}"
+
+archives:
+  - name_template: >-
+      {{- .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end -}}
+    format_overrides:
+      - goos: windows
+        format: zip
+    builds_info:
+      group: root
+      owner: root
+    files:
+      - README.md
+      - LICENSE.md
+      - completions/*
+
+universal_binaries:
+  - replace: false
+
+release:
+  github:
+    owner: nikoksr # Replace with your GitHub username or organization.
+    name: dbench
+  draft: false # Set to false if you want to publish releases directly.
+
+checksum:
+  name_template: "checksums.txt"
+
+signs:
+  - artifacts: checksum
+
+changelog:
+  use: github-native

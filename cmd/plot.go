@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
-	"github.com/nikoksr/go-pgbench/pkg/database"
-	"github.com/nikoksr/go-pgbench/pkg/export"
-	"github.com/nikoksr/go-pgbench/pkg/plot"
+	"github.com/nikoksr/dbench/pkg/buildinfo"
+	"github.com/nikoksr/dbench/pkg/database"
+	"github.com/nikoksr/dbench/pkg/export"
+	"github.com/nikoksr/dbench/pkg/plot"
 )
 
 func newPlotCommand() *cobra.Command {

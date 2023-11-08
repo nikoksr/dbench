@@ -4,10 +4,10 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/go-pgbench/ent/schema/pulid"
+	"github.com/nikoksr/dbench/ent/schema/pulid"
 
-	"github.com/nikoksr/go-pgbench/ent"
-	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/dbench/ent"
+	"github.com/nikoksr/dbench/pkg/models"
 )
 
 type Database interface {

@@ -2,14 +2,14 @@ package schema
 
 import (
 	"entgo.io/ent/schema/mixin"
-	"github.com/nikoksr/go-pgbench/ent/schema/pulid"
+	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
 
-	"github.com/nikoksr/go-pgbench/ent/schema/duration"
+	"github.com/nikoksr/dbench/ent/schema/duration"
 )
 
 var now = func() time.Time {

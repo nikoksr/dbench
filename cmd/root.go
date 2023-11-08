@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
+	"github.com/nikoksr/dbench/pkg/buildinfo"
 )
 
 var resultsDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)

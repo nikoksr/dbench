@@ -3,7 +3,7 @@ package models
 import (
 	typeid "go.jetpack.io/typeid/typed"
 
-	"github.com/nikoksr/go-pgbench/ent"
+	"github.com/nikoksr/dbench/ent"
 )
 
 type (

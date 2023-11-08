@@ -3,13 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/go-pgbench/ent/result"
+	"github.com/nikoksr/dbench/ent/result"
 
 	"entgo.io/ent/dialect"
 	_ "github.com/xiaoqidun/entps" // Modernc wrapper for ent
 
-	"github.com/nikoksr/go-pgbench/ent"
-	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/dbench/ent"
+	"github.com/nikoksr/dbench/pkg/models"
 )
 
 var _ Database = (*EntDatabase)(nil) // Ensure that EntDatabase implements the Database interface

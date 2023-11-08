@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nikoksr/go-pgbench/ent/schema/duration"
-	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/dbench/ent/schema/duration"
+	"github.com/nikoksr/dbench/pkg/models"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.

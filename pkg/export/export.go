@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/dbench/pkg/models"
 	"os"
 	"reflect"
 	"strconv"

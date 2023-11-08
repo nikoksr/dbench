@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 	typeid "go.jetpack.io/typeid/typed"
 
-	"github.com/nikoksr/go-pgbench/ent"
-	"github.com/nikoksr/go-pgbench/ent/schema/duration"
-	"github.com/nikoksr/go-pgbench/ent/schema/pulid"
-	"github.com/nikoksr/go-pgbench/pkg/benchmark"
-	"github.com/nikoksr/go-pgbench/pkg/buildinfo"
-	"github.com/nikoksr/go-pgbench/pkg/database"
-	"github.com/nikoksr/go-pgbench/pkg/export"
-	"github.com/nikoksr/go-pgbench/pkg/models"
-	"github.com/nikoksr/go-pgbench/pkg/ui"
+	"github.com/nikoksr/dbench/ent"
+	"github.com/nikoksr/dbench/ent/schema/duration"
+	"github.com/nikoksr/dbench/ent/schema/pulid"
+	"github.com/nikoksr/dbench/pkg/benchmark"
+	"github.com/nikoksr/dbench/pkg/buildinfo"
+	"github.com/nikoksr/dbench/pkg/database"
+	"github.com/nikoksr/dbench/pkg/export"
+	"github.com/nikoksr/dbench/pkg/models"
+	"github.com/nikoksr/dbench/pkg/ui"
 )
 
 func newBenchCommand() *cobra.Command {

@@ -1,4 +1,4 @@
-module github.com/nikoksr/go-pgbench
+module github.com/nikoksr/dbench
 
 go 1.21.3
 

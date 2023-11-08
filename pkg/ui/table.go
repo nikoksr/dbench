@@ -7,7 +7,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
-	"github.com/nikoksr/go-pgbench/pkg/models"
+	"github.com/nikoksr/dbench/pkg/models"
 )
 
 // Renderer defines the interface for rendering tables.

@@ -2,6 +2,9 @@
 .vscode/
 tmp/
 
+dist/
+completions/
+
 # Files
 *.exe
 *.exe~

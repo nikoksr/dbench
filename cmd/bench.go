@@ -26,6 +26,7 @@ func newBenchCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:               "bench [command]",
+		Aliases:           []string{"b"},
 		Short:             "Manage and run your database benchmarks.",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
@@ -70,6 +71,7 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:               "run",
+		Aliases:           []string{"r"},
 		Short:             "Run an array of benchmarks against a PostgreSQL database",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
@@ -135,8 +137,9 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 func newBenchInitCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a target database using pgbench",
+		Use:     "init",
+		Aliases: []string{"i"},
+		Short:   "Initialize a target database using pgbench",
 		Long: `This command initializes a target database using pgbench. You can either use this command to create a new
 database or run pgbench manually. If you want to run pgbench manually, this is what an example command would look like:
 
@@ -189,7 +192,7 @@ func newBenchListCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:               "list",
-		Aliases:           []string{"ls"},
+		Aliases:           []string{"l", "ls"},
 		Short:             "List all benchmark results",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
@@ -239,6 +242,7 @@ func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:               "export",
+		Aliases:           []string{"e"},
 		Short:             "Export all benchmark results to a format of your choice",
 		SilenceUsage:      true,
 		SilenceErrors:     true,

@@ -15,6 +15,7 @@ import (
 func newPlotCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "plot [result-group ID]",
+		Aliases:           []string{"p"},
 		Short:             "Plot results produced by the bench command",
 		SilenceUsage:      true,
 		SilenceErrors:     true,

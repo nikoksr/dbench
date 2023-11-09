@@ -32,6 +32,9 @@ func newBenchCommand() *cobra.Command {
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: cobra.NoFileCompletions,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return validateRequirements()
+		},
 	}
 
 	// Define flags for database connection parameters
@@ -76,9 +79,6 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		ValidArgsFunction: cobra.NoFileCompletions,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return validateRequirements()
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 

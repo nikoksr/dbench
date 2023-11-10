@@ -91,7 +91,7 @@ func newRootCommand() *cobra.Command {
 	}
 
 	// Print the version number without the app name
-	cmd.SetVersionTemplate("{{.Version}}")
+	cmd.SetVersionTemplate("{{.Version}}\n")
 
 	// Subcommands
 	cmd.AddCommand(

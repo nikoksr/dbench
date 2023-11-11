@@ -26,7 +26,13 @@ DBench parses the result of each benchmarks and persists it in a database. This 
 
 ## Install <a id="install"></a>
 
-Either download one of the [releases](https://github.com/nikoksr/dbench/releases) or install manually using `go install`:
+Download one of the [releases](https://github.com/nikoksr/dbench/releases) for your system, or install using the provided [install script](scripts/install.sh):
+
+```sh
+curl -L https://tinyurl.com/install-dbench | bash
+```
+
+Alternatively, you can install dbench using Go:
 
 ```sh
 go install github.com/nikoksr/dbench
@@ -38,8 +44,10 @@ go install github.com/nikoksr/dbench
 
 Before you can run any benchmarks, you need to create a database and initialize it with pgbench. This can be done by running the following command:
 
+> Hint: Remember to replace the flags with your own values.
+
 ```sh
-dbench bench init --dbname=postgres --username=postgres --host 127.0.0.1 --port 5432
+dbench bench init --dbname postgres --username postgres --host 127.0.0.1 --port 5432
 ```
 
 > Hint: dbench/pgbench expects the `PGPASSWORD` environment variable to be set. Currently no password flag is supported since I didn't need it and it enforces better security practices. This might very well change down the line.
@@ -47,7 +55,7 @@ dbench bench init --dbname=postgres --username=postgres --host 127.0.0.1 --port 
 Now, you can run your first benchmark using the following command:
 
 ```sh
-dbench bench run --dbname=postgres --username=postgres --host 127.0.0.1 --port 5432
+dbench bench run --dbname postgres --username postgres --host 127.0.0.1 --port 5432
 ```
 
 The benchmark will present you with an executable command once it is done. You can use this command to generate a plot of the results. It looks something like this:

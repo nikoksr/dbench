@@ -26,6 +26,8 @@ DBench parses the result of each benchmarks and persists it in a database. This 
 
 ## Install <a id="install"></a>
 
+> Important: While the releases offer binaries for multiple platforms and architectures, only Linux is tested. If you are using a different OS, I do not guarantee that dbench will work as expected.
+
 Download one of the [releases](https://github.com/nikoksr/dbench/releases) for your system, or install using the provided [install script](scripts/install.sh):
 
 ```sh

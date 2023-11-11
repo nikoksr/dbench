@@ -13,7 +13,7 @@ before:
 
 # Used when you want to create a pre-release.
 snapshot:
-  name_template: "snapshot-{{ .ShortCommit }}"
+  name_template: "{{ incpatch .Version }}-next"
 
 report_sizes: true
 
@@ -21,16 +21,30 @@ report_sizes: true
 builds:
   - env:
       - CGO_ENABLED=0
+    binary: dbench
     goos:
       - linux
+      - darwin
+      - windows
     goarch:
+      - "386"
       - amd64
-    binary: dbench
+      - arm
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: windows
+        goarch: "386"
+      - goos: windows
+        goarch: arm
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X github.com/nikoksr/dbench/pkg/buildinfo.Version={{ .Version }}"
+      - "-s -w -X github.com/nikoksr/dbench/pkg/buildinfo.Version={{.Version}}"
 
 archives:
   - name_template: >-

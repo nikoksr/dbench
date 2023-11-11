@@ -26,6 +26,9 @@ builds:
       - linux
       - darwin
       - windows
+      - freebsd
+      - openbsd
+      - netbsd
     goarch:
       - "386"
       - amd64
@@ -39,6 +42,14 @@ builds:
       - goos: windows
         goarch: "386"
       - goos: windows
+        goarch: arm
+      - goos: openbsd
+        goarch: "386"
+      - goos: openbsd
+        goarch: arm
+      - goos: netbsd
+        goarch: "386"
+      - goos: netbsd
         goarch: arm
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:

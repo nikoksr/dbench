@@ -3,6 +3,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -29,13 +30,27 @@ func (r *ResultTableRenderer) Render(results []*models.Result) string {
 	t := table.NewWriter()
 	t.SetOutputMirror(&sb)
 	t.AppendHeader(table.Row{
-		"ID", "Group ID", "Created At",
-		// ... other headers
+		"ID",
+		"Group ID",
+		"Clients",
+		"Threads",
+		"Transactions",
+		"TPS",
+		"Avg. Latency",
+		"Conn Time",
+		"Created At",
 	})
 	for _, result := range results {
 		t.AppendRow(table.Row{
-			result.ID, result.GroupID, result.CreatedAt.Local(),
-			// ... other fields
+			result.ID,
+			result.GroupID,
+			result.Clients,
+			result.Threads,
+			result.Transactions,
+			fmt.Sprintf("%.2f", result.TransactionsPerSecond),
+			result.AverageLatency,
+			result.InitialConnectionTime,
+			result.CreatedAt,
 		})
 	}
 

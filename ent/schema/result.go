@@ -1,15 +1,15 @@
 package schema
 
 import (
-	"entgo.io/ent/schema/mixin"
-	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/mixin"
 
 	"github.com/nikoksr/dbench/ent/schema/duration"
+	"github.com/nikoksr/dbench/ent/schema/pulid"
 )
 
 var now = func() time.Time {
@@ -54,9 +54,6 @@ func (ResultMixin) Fields() []ent.Field {
 			Optional().
 			Immutable(),
 		field.Float("transactions_per_second").
-			Optional().
-			Immutable(),
-		field.Int("transactions_per_client").
 			Optional().
 			Immutable(),
 		field.Int("failed_transactions").

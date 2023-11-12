@@ -34,12 +34,6 @@ Download one of the [releases](https://github.com/nikoksr/dbench/releases) for y
 curl -L https://tinyurl.com/install-dbench | bash
 ```
 
-Alternatively, you can install dbench using Go:
-
-```sh
-go install github.com/nikoksr/dbench
-```
-
 ## Usage <a id="usage"></a>
 
 > It is recommended to check the help page of the command line interface for more information on the available flags and commands.

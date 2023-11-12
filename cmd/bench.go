@@ -61,20 +61,21 @@ func newBenchCommand() *cobra.Command {
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: cobra.NoFileCompletions,
+		Hidden:            true,
+		Deprecated:        "all subcommands have been moved to the root command. Use run, init, list and export directly instead.",
 	}
 
-	// Define flags for database connection parameters
-	cmd.PersistentFlags().StringVarP(&benchConfig.DBName, "dbname", "d", "postgres", "Name of the database")
-	cmd.PersistentFlags().StringVarP(&benchConfig.Username, "username", "U", "postgres", "Username for connecting to the database")
-	cmd.PersistentFlags().StringVarP(&benchConfig.Host, "host", "H", "localhost", "Host of the database")
-	cmd.PersistentFlags().StringVarP(&benchConfig.Port, "port", "p", "5432", "Port of the database")
+	cmd.AddGroup(&cobra.Group{
+		ID:    "commands",
+		Title: "Commands",
+	})
 
 	// Bench subcommands
 	cmd.AddCommand(
 		newBenchInitCommand(&benchConfig),
 		newBenchRunCommand(&benchConfig),
-		newBenchListCommand(&benchConfig),
-		newBenchExportCommand(&benchConfig),
+		newBenchListCommand(),
+		newBenchExportCommand(),
 	)
 
 	return cmd
@@ -98,9 +99,14 @@ func printBenchComplete(groupID string) {
 func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	var clients []int
 
+	if benchConfig == nil {
+		benchConfig = &models.BenchmarkConfig{}
+	}
+
 	cmd := &cobra.Command{
 		Use:               "run",
 		Aliases:           []string{"r"},
+		GroupID:           "commands",
 		Short:             "Run an array of benchmarks against a PostgreSQL database",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
@@ -167,6 +173,13 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 		},
 	}
 
+	// Database flags
+	cmd.Flags().StringVarP(&benchConfig.DBName, "dbname", "d", "postgres", "Name of the database")
+	cmd.Flags().StringVarP(&benchConfig.Username, "username", "u", "postgres", "Username for connecting to the database")
+	cmd.Flags().StringVarP(&benchConfig.Host, "host", "h", "localhost", "Host of the database")
+	cmd.Flags().StringVarP(&benchConfig.Port, "port", "p", "5432", "Port of the database")
+
+	// Benchmark flags
 	cmd.Flags().StringVar(&benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")
 	cmd.Flags().IntSliceVar(&clients, "clients", []int{1, 2, 4, 8, 16, 32, 64, 128, 256}, "List of number of clients to benchmark with")
 	cmd.Flags().IntVar(&benchConfig.NumThreads, "threads", 1, "Number of threads to use")
@@ -175,9 +188,14 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 }
 
 func newBenchInitCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
+	if benchConfig == nil {
+		benchConfig = &models.BenchmarkConfig{}
+	}
+
 	cmd := &cobra.Command{
 		Use:     "init",
 		Aliases: []string{"i"},
+		GroupID: "commands",
 		Short:   "Initialize a target database using pgbench",
 		Long: `This command initializes a target database using pgbench. You can either use this command to create a new
 database or run pgbench manually. If you want to run pgbench manually, this is what an example command would look like:
@@ -210,6 +228,13 @@ https://www.postgresql.org/docs/current/pgbench.html
 		},
 	}
 
+	// Database flags
+	cmd.Flags().StringVarP(&benchConfig.DBName, "dbname", "d", "postgres", "Name of the database")
+	cmd.Flags().StringVarP(&benchConfig.Username, "username", "u", "postgres", "Username for connecting to the database")
+	cmd.Flags().StringVarP(&benchConfig.Host, "host", "h", "localhost", "Host of the database")
+	cmd.Flags().StringVarP(&benchConfig.Port, "port", "p", "5432", "Port of the database")
+
+	// Init flags
 	cmd.Flags().IntVar(&benchConfig.FillFactor, "fill", 100, "Fill factor for the database (10-100)")
 	cmd.Flags().IntVar(&benchConfig.ScaleFactor, "scale", 1, "Scale factor for the database (1-1000)")
 
@@ -239,13 +264,14 @@ func parseOrderBy(orderBy string) func(*sql.Selector) {
 	return orderFunc
 }
 
-func newBenchListCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
+func newBenchListCommand() *cobra.Command {
 	var sort []string
 
 	cmd := &cobra.Command{
 		Use:               "list",
 		Aliases:           []string{"l", "ls"},
-		Short:             "List all benchmark results",
+		GroupID:           "commands",
+		Short:             "List results of previous benchmarks",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
@@ -289,13 +315,14 @@ func newBenchListCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	return cmd
 }
 
-func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
+func newBenchExportCommand() *cobra.Command {
 	var format string
 
 	cmd := &cobra.Command{
 		Use:               "export",
 		Aliases:           []string{"e"},
-		Short:             "Export all benchmark results to a format of your choice. Supported formats: [csv], json, gnuplot",
+		GroupID:           "commands",
+		Short:             "Export all benchmark results to a format of your choice",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,

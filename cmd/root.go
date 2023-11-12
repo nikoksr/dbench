@@ -32,8 +32,15 @@ func newRootCommand() *cobra.Command {
 
 	// Subcommands
 	cmd.AddCommand(
-		newBenchCommand(),
+		// Commands
+		newBenchRunCommand(nil),
+		newBenchInitCommand(nil),
+		newBenchListCommand(),
+		newBenchExportCommand(),
 		newPlotCommand(),
+
+		// Deprecated commands
+		newBenchCommand(),
 	)
 
 	return cmd

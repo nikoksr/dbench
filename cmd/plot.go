@@ -33,7 +33,7 @@ func newPlotCommand() *cobra.Command {
 		Use:               "plot [result-group ID]",
 		Aliases:           []string{"p"},
 		GroupID:           "commands",
-		Short:             "Plot results produced by the bench command",
+		Short:             "Plot results of a benchmark result-group",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.ExactArgs(1),

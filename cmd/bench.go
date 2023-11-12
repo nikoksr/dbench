@@ -243,7 +243,7 @@ func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "export",
 		Aliases:           []string{"e"},
-		Short:             "Export all benchmark results to a format of your choice",
+		Short:             "Export all benchmark results to a format of your choice. Supported formats: [csv], json, gnuplot",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
@@ -266,11 +266,11 @@ func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 			// Export results
 			switch format {
 			case "csv":
-				err = export.ToCSV(results, "results.csv")
+				err = export.ToCSV(results, buildinfo.AppName+"_results.csv")
 			case "json":
-				err = export.ToJSON(results, "results.json")
+				err = export.ToJSON(results, buildinfo.AppName+"_results.json")
 			case "gnuplot":
-				err = export.ToGnuplot(results, "results.dat")
+				err = export.ToGnuplot(results, buildinfo.AppName+"_results.dat")
 			default:
 				return fmt.Errorf("unknown export format: %s", format)
 			}
@@ -284,7 +284,7 @@ func newBenchExportCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	}
 
 	// Flags
-	cmd.Flags().StringVar(&format, "format", "csv", "Format to export results to")
+	cmd.Flags().StringVar(&format, "format", "csv", "Format to export results to (csv, json, gnuplot)")
 
 	return cmd
 }

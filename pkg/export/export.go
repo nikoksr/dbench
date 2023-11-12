@@ -5,10 +5,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"github.com/nikoksr/dbench/pkg/models"
 	"os"
-	"reflect"
 	"strconv"
+	"time"
+
+	"github.com/nikoksr/dbench/pkg/models"
 )
 
 func openFile(filename string) (*os.File, error) {
@@ -17,15 +18,6 @@ func openFile(filename string) (*os.File, error) {
 		return nil, err
 	}
 	return file, nil
-}
-
-func writeRecord(writer *csv.Writer, e reflect.Value) error {
-	var record []string
-	for j := 0; j < e.NumField(); j++ {
-		field := e.Field(j)
-		record = append(record, field.String())
-	}
-	return writer.Write(record)
 }
 
 // ToCSV exports a slice of Result structs to a CSV file.
@@ -113,11 +105,12 @@ func ToGnuplotBasic(results []*models.Result, filename string) error {
 	defer file.Close()
 
 	for _, result := range results {
-		line := fmt.Sprintf("%d %f %s %s\n",
+		line := fmt.Sprintf("%d %f %d %d\n",
 			result.Clients,
 			result.TransactionsPerSecond,
-			result.AverageLatency.String(),
-			result.InitialConnectionTime.String())
+			time.Duration(result.AverageLatency).Milliseconds(),
+			time.Duration(result.InitialConnectionTime).Milliseconds(),
+		)
 		_, err := fmt.Fprint(file, line)
 		if err != nil {
 			return fmt.Errorf("write to file: %w", err)

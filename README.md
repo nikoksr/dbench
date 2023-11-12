@@ -43,7 +43,7 @@ Before you can run any benchmarks, you need to create a database and initialize 
 > Hint: Remember to replace the flags with your own values.
 
 ```sh
-dbench bench init --dbname postgres --username postgres --host 127.0.0.1 --port 5432
+dbench init --dbname postgres --username postgres --host 127.0.0.1 --port 5432
 ```
 
 > Hint: dbench/pgbench expects the `PGPASSWORD` environment variable to be set. Currently no password flag is supported since I didn't need it and it enforces better security practices. This might very well change down the line.
@@ -51,7 +51,7 @@ dbench bench init --dbname postgres --username postgres --host 127.0.0.1 --port 
 Now, you can run your first benchmark using the following command:
 
 ```sh
-dbench bench run --dbname postgres --username postgres --host 127.0.0.1 --port 5432
+dbench run --dbname postgres --username postgres --host 127.0.0.1 --port 5432
 ```
 
 The benchmark will present you with an executable command once it is done. You can use this command to generate a plot of the results. It looks something like this:
@@ -65,5 +65,5 @@ Under the hood we generate gnuplot compatible data fields and a gnuplot script. 
 To check on old benchmarks, you can use the `list` command:
 
 ```sh
-dbench bench list
+dbench list
 ```

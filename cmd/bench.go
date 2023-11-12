@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -20,6 +22,32 @@ import (
 	"github.com/nikoksr/dbench/pkg/ui"
 )
 
+var (
+	noPasswordErr = fmt.Errorf(`Environment variable PGPASSWORD must be set to the password of the specified PostgreSQL user.
+
+	# Example
+	export PGPASSWORD=supersecret
+
+For more information, see the official documentation:
+https://www.postgresql.org/docs/current/libpq-envars.html
+`)
+
+	pgbenchNotInstalledErr = fmt.Errorf(`pgbench is required to run the application. It can be installed with the following command:
+
+	# Arch
+	sudo pacman -S postgresql
+
+	# Debian / Ubuntu
+	sudo apt install postgresql-client
+
+	# macOS
+	brew install postgresql
+
+For more information, see the official documentation:
+https://www.postgresql.org/docs/current/pgbench.html
+`)
+)
+
 func newBenchCommand() *cobra.Command {
 	// Configuration for the benchmark command
 	var benchConfig models.BenchmarkConfig
@@ -27,14 +55,12 @@ func newBenchCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "bench [command]",
 		Aliases:           []string{"b"},
-		Short:             "Manage and run your database benchmarks.",
+		GroupID:           "commands",
+		Short:             "Manage and run your database benchmarks",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
 		ValidArgsFunction: cobra.NoFileCompletions,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			return validateRequirements()
-		},
 	}
 
 	// Define flags for database connection parameters
@@ -79,6 +105,19 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		ValidArgsFunction: cobra.NoFileCompletions,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check if PGPASSWORD is set
+			if os.Getenv("PGPASSWORD") == "" {
+				return noPasswordErr
+			}
+
+			// Check if pgbench is installed
+			if _, err := exec.LookPath("pgbench"); err != nil {
+				return pgbenchNotInstalledErr
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
@@ -153,6 +192,19 @@ https://www.postgresql.org/docs/current/pgbench.html
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		ValidArgsFunction: cobra.NoFileCompletions,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check if PGPASSWORD is set
+			if os.Getenv("PGPASSWORD") == "" {
+				return noPasswordErr
+			}
+
+			// Check if pgbench is installed
+			if _, err := exec.LookPath("pgbench"); err != nil {
+				return pgbenchNotInstalledErr
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return benchmark.Init(benchConfig)
 		},

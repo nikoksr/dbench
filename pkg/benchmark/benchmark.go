@@ -77,13 +77,6 @@ func ParseOutput(output string) (*models.Result, error) {
 			}
 			result.Threads = n
 
-		case strings.HasPrefix(line, "number of transactions per client:"):
-			n, err := strconv.Atoi(fields[5])
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse number of transactions per client: %w", err)
-			}
-			result.TransactionsPerClient = n
-
 		case strings.HasPrefix(line, "number of transactions actually processed:"):
 			n, err := strconv.Atoi(fields[5])
 			if err != nil {

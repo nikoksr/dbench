@@ -3,12 +3,12 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/ent/result"
 
 	"entgo.io/ent/dialect"
 	_ "github.com/xiaoqidun/entps" // Modernc wrapper for ent
 
 	"github.com/nikoksr/dbench/ent"
+	"github.com/nikoksr/dbench/ent/result"
 	"github.com/nikoksr/dbench/pkg/models"
 )
 
@@ -43,7 +43,6 @@ func (db *EntDatabase) SaveResult(ctx context.Context, res *models.Result) error
 		SetThreads(res.Threads).
 		SetTransactions(res.Transactions).
 		SetTransactionsPerSecond(res.TransactionsPerSecond).
-		SetTransactionsPerClient(res.TransactionsPerClient).
 		SetFailedTransactions(res.FailedTransactions).
 		SetAverageLatency(res.AverageLatency).
 		SetInitialConnectionTime(res.InitialConnectionTime).

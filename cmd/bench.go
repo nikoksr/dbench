@@ -128,16 +128,16 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 			ctx := cmd.Context()
 
 			// Open database connection
-			resultsDB, err := database.NewEntDatabase(ctx, resultsDSN)
+			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			if err != nil {
-				return fmt.Errorf("create results database: %w", err)
+				return fmt.Errorf("create dbench database: %w", err)
 			}
-			defer resultsDB.Close()
+			defer dbenchDB.Close()
 
-			// Generate a new result group id. This is mostly helpful for the analysis of the results.
-			resultGroupID, err := typeid.New[models.ResultGroupID]()
+			// Generate a new benchmark group id. This is mostly helpful for the analysis of the benchmarks.
+			benchmarkGroupID, err := typeid.New[models.BenchmarkGroupID]()
 			if err != nil {
-				return fmt.Errorf("create result group id: %w", err)
+				return fmt.Errorf("create benchmark group id: %w", err)
 			}
 
 			// Run benchmark for different client counts
@@ -149,25 +149,25 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 
 				// Run benchmark
 				benchStart := time.Now()
-				result, err := benchmark.Run(benchConfig)
+				bench, err := benchmark.Run(ctx, benchConfig)
 				benchRuntime := time.Since(benchStart)
 
 				if err != nil {
 					return fmt.Errorf("run benchmark: %w", err)
 				}
 
-				// Set some meta result values
-				result.TotalRuntime = duration.Duration(benchRuntime)
-				result.GroupID = pulid.ID(resultGroupID.String())
+				// Set some meta benchmark values
+				bench.Edges.Result.TotalRuntime = duration.Duration(benchRuntime)
+				bench.GroupID = pulid.ID(benchmarkGroupID.String())
 
-				// Save result to database
-				if err := resultsDB.SaveResult(ctx, result); err != nil {
-					return fmt.Errorf("save result: %w", err)
+				// Save benchmark to database
+				if err := dbenchDB.SaveBenchmark(ctx, bench); err != nil {
+					return fmt.Errorf("save benchmark: %w", err)
 				}
 			}
 
 			// Print benchmark complete message
-			printBenchComplete(resultGroupID.String())
+			printBenchComplete(benchmarkGroupID.String())
 
 			return nil
 		},
@@ -271,7 +271,7 @@ func newBenchListCommand() *cobra.Command {
 		Use:               "list",
 		Aliases:           []string{"l", "ls"},
 		GroupID:           "commands",
-		Short:             "List results of previous benchmarks",
+		Short:             "List previously run benchmarks",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
@@ -279,14 +279,14 @@ func newBenchListCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
-			resultsDB, err := database.NewEntDatabase(ctx, resultsDSN)
+			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			if err != nil {
-				return fmt.Errorf("create results database: %w", err)
+				return fmt.Errorf("create dbench database: %w", err)
 			}
-			defer resultsDB.Close()
+			defer dbenchDB.Close()
 
-			// Query results
-			orderByFunc := func(query *ent.ResultQuery) *ent.ResultQuery {
+			// Query benchmarks
+			orderByFunc := func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery {
 				for _, order := range sort {
 					orderFunc := parseOrderBy(order)
 					query = query.Order(orderFunc)
@@ -295,14 +295,14 @@ func newBenchListCommand() *cobra.Command {
 				return query
 			}
 
-			results, err := resultsDB.FetchResults(ctx, database.WithOrderBy(orderByFunc))
+			benchmarks, err := dbenchDB.FetchBenchmarks(ctx, database.WithOrderBy(orderByFunc))
 			if err != nil {
-				return fmt.Errorf("fetch results: %w", err)
+				return fmt.Errorf("fetch benchmarks: %w", err)
 			}
 
-			// Render results
-			renderer := ui.NewResultTableRenderer()
-			tableStr := renderer.Render(results)
+			// Render benchmarks
+			renderer := ui.NewBenchmarksTableRenderer()
+			tableStr := renderer.Render(benchmarks)
 			fmt.Println(tableStr)
 
 			return nil
@@ -310,7 +310,7 @@ func newBenchListCommand() *cobra.Command {
 	}
 
 	// Flags
-	cmd.Flags().StringSliceVar(&sort, "sort", []string{"id"}, "Sort results columns (+/- prefix for ascending/descending)")
+	cmd.Flags().StringSliceVar(&sort, "sort", []string{"id"}, "Sort benchmarks columns (+/- prefix for ascending/descending)")
 
 	return cmd
 }
@@ -318,11 +318,16 @@ func newBenchListCommand() *cobra.Command {
 func newBenchExportCommand() *cobra.Command {
 	var format string
 
+	generateExportFileName := func(fileFormat string) string {
+		localTime := time.Now().Local().String()
+		return fmt.Sprintf("%s_%s.%s", buildinfo.AppName, localTime, fileFormat)
+	}
+
 	cmd := &cobra.Command{
 		Use:               "export",
 		Aliases:           []string{"e"},
 		GroupID:           "commands",
-		Short:             "Export all benchmark results to a format of your choice",
+		Short:             "Export all benchmarks to a format of your choice",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.NoArgs,
@@ -330,32 +335,30 @@ func newBenchExportCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
-			resultsDB, err := database.NewEntDatabase(ctx, resultsDSN)
+			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			if err != nil {
-				return fmt.Errorf("create results database: %w", err)
+				return fmt.Errorf("create dbench database: %w", err)
 			}
-			defer resultsDB.Close()
+			defer dbenchDB.Close()
 
-			// Query results
-			results, err := resultsDB.FetchResults(ctx)
+			// Query benchmarks
+			benchmarks, err := dbenchDB.FetchBenchmarks(ctx)
 			if err != nil {
-				return fmt.Errorf("fetch results: %w", err)
+				return fmt.Errorf("fetch benchmarks: %w", err)
 			}
 
-			// Export results
+			// Export benchmarks
 			switch format {
 			case "csv":
-				err = export.ToCSV(results, buildinfo.AppName+"_results.csv")
+				err = export.ToCSV(benchmarks, generateExportFileName("csv"))
 			case "json":
-				err = export.ToJSON(results, buildinfo.AppName+"_results.json")
-			case "gnuplot":
-				err = export.ToGnuplot(results, buildinfo.AppName+"_results.dat")
+				err = export.ToJSON(benchmarks, generateExportFileName("json"))
 			default:
 				return fmt.Errorf("unknown export format: %s", format)
 			}
 
 			if err != nil {
-				return fmt.Errorf("export results: %w", err)
+				return fmt.Errorf("export benchmarks: %w", err)
 			}
 
 			return nil
@@ -363,7 +366,7 @@ func newBenchExportCommand() *cobra.Command {
 	}
 
 	// Flags
-	cmd.Flags().StringVar(&format, "format", "csv", "Format to export results to (csv, json, gnuplot)")
+	cmd.Flags().StringVar(&format, "format", "csv", "Format to export benchmarks to (csv, json)")
 
 	return cmd
 }

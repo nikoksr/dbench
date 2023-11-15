@@ -20,8 +20,8 @@ func openFile(filename string) (*os.File, error) {
 	return file, nil
 }
 
-// ToCSV exports a slice of Result structs to a CSV file.
-func ToCSV(results []*models.Result, filename string) error {
+// ToCSV exports a slice of Benchmark structs to a CSV file.
+func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 	file, err := openFile(filename)
 	if err != nil {
 		return err
@@ -33,22 +33,47 @@ func ToCSV(results []*models.Result, filename string) error {
 
 	// Write header
 	header := []string{
+		// Config
 		"ID",
 		"GroupID",
+		"Version",
+		"Command",
 		"TransactionType",
 		"ScalingFactor",
 		"QueryMode",
 		"Clients",
 		"Threads",
+		// PGbench result
 		"Transactions",
 		"TransactionsPerSecond",
 		"TransactionsPerClient",
 		"FailedTransactions",
 		"AverageLatency",
-		"InitialConnectionTime",
+		"ConnectionTime",
 		"TotalRuntime",
-		"Version",
-		"Command",
+		// CPU
+		"CPUMinLoad",
+		"CPUMaxLoad",
+		"CPUAverageLoad",
+		"CPU50thLoad",
+		"CPU75thLoad",
+		"CPU90thLoad",
+		"CPU95thLoad",
+		"CPU99thLoad",
+		"CPU999thLoad",
+		"CPU9999thLoad",
+		// Memory
+		"MemoryMinLoad",
+		"MemoryMaxLoad",
+		"MemoryAverageLoad",
+		"Memory50thLoad",
+		"Memory75thLoad",
+		"Memory90thLoad",
+		"Memory95thLoad",
+		"Memory99thLoad",
+		"Memory999thLoad",
+		"Memory9999thLoad",
+		// Misc
 		"CreatedAt",
 	}
 	if err := writer.Write(header); err != nil {
@@ -56,24 +81,45 @@ func ToCSV(results []*models.Result, filename string) error {
 	}
 
 	// Write data rows
-	for _, result := range results {
+	for _, benchmark := range benchmarks {
 		record := []string{
-			result.ID.String(),
-			result.GroupID.String(),
-			result.TransactionType,
-			strconv.FormatFloat(result.ScalingFactor, 'f', 6, 64),
-			result.QueryMode,
-			strconv.Itoa(result.Clients),
-			strconv.Itoa(result.Threads),
-			strconv.Itoa(result.Transactions),
-			strconv.FormatFloat(result.TransactionsPerSecond, 'f', 6, 64),
-			strconv.Itoa(result.FailedTransactions),
-			result.AverageLatency.String(),
-			result.InitialConnectionTime.String(),
-			result.TotalRuntime.String(),
-			result.Version,
-			result.Command,
-			result.CreatedAt.String(),
+			// Config
+			benchmark.ID.String(),
+			benchmark.GroupID.String(),
+			benchmark.Version,
+			benchmark.Command,
+			benchmark.TransactionType,
+			strconv.FormatFloat(benchmark.ScalingFactor, 'f', 6, 64),
+			benchmark.QueryMode,
+			strconv.Itoa(benchmark.Clients),
+			strconv.Itoa(benchmark.Threads),
+			// PGbench result
+			strconv.Itoa(benchmark.Edges.Result.Transactions),
+			strconv.FormatFloat(benchmark.Edges.Result.TransactionsPerSecond, 'f', 6, 64),
+			strconv.Itoa(benchmark.Edges.Result.FailedTransactions),
+			benchmark.Edges.Result.AverageLatency.String(),
+			benchmark.Edges.Result.ConnectionTime.String(),
+			benchmark.Edges.Result.TotalRuntime.String(),
+			// CPU
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMinLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMaxLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUAverageLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU50thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU75thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU90thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU95thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU99thLoad, 'f', 6, 64),
+			// Memory
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMinLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMaxLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryAverageLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory50thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory75thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory90thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory95thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory99thLoad, 'f', 6, 64),
+			// Misc
+			benchmark.CreatedAt.String(),
 		}
 		if err := writer.Write(record); err != nil {
 			return err
@@ -95,57 +141,20 @@ func ToJSON(data any, filename string) error {
 	return encoder.Encode(data)
 }
 
-// ToGnuplotBasic exports a slice of Result structs to a Gnuplot compatible .dat file.
-func ToGnuplotBasic(results []*models.Result, filename string) error {
+// ToGnuplotBasic exports a slice of Benchmark structs to a Gnuplot compatible .dat file.
+func ToGnuplotBasic(benchmarks []*models.Benchmark, filename string) error {
 	file, err := openFile(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	for _, result := range results {
+	for _, benchmark := range benchmarks {
 		line := fmt.Sprintf("%d %f %d %d\n",
-			result.Clients,
-			result.TransactionsPerSecond,
-			time.Duration(result.AverageLatency).Milliseconds(),
-			time.Duration(result.InitialConnectionTime).Milliseconds(),
-		)
-		_, err := fmt.Fprint(file, line)
-		if err != nil {
-			return fmt.Errorf("write to file: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// ToGnuplot exports a slice of Result structs to a Gnuplot compatible .dat file.
-func ToGnuplot(results []*models.Result, filename string) error {
-	file, err := openFile(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	for _, result := range results {
-		line := fmt.Sprintf(
-			"%s %s %s %f %s %d %d %d %f %d %d %s %s %s %s %s %s\n",
-			result.ID,
-			result.GroupID,
-			result.TransactionType,
-			result.ScalingFactor,
-			result.QueryMode,
-			result.Clients,
-			result.Threads,
-			result.Transactions,
-			result.TransactionsPerSecond,
-			result.FailedTransactions,
-			result.AverageLatency.String(),
-			result.InitialConnectionTime.String(),
-			result.TotalRuntime.String(),
-			result.Version,
-			result.Command,
-			result.CreatedAt.String(),
+			benchmark.Clients,
+			benchmark.Edges.Result.TransactionsPerSecond,
+			time.Duration(benchmark.Edges.Result.AverageLatency).Milliseconds(),
+			time.Duration(benchmark.Edges.Result.ConnectionTime).Milliseconds(),
 		)
 		_, err := fmt.Fprint(file, line)
 		if err != nil {

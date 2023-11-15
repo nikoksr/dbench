@@ -30,10 +30,10 @@ http://www.gnuplot.info/
 
 func newPlotCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "plot [result-group ID]",
+		Use:               "plot [benchmark-group ID]",
 		Aliases:           []string{"p"},
 		GroupID:           "commands",
-		Short:             "Plot results of a benchmark result-group",
+		Short:             "Plot benchmarks of a benchmark benchmark-group",
 		SilenceUsage:      true,
 		SilenceErrors:     true,
 		Args:              cobra.ExactArgs(1),
@@ -47,20 +47,20 @@ func newPlotCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Get result-group ID
-			resultGroupID := args[0]
+			// Get benchmark-group ID
+			benchmarkGroupID := args[0]
 
 			// Open database connection
 			ctx := cmd.Context()
-			resultsDB, err := database.NewEntDatabase(ctx, resultsDSN)
+			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			if err != nil {
-				return fmt.Errorf("create results database: %w", err)
+				return fmt.Errorf("create dbench database: %w", err)
 			}
-			defer resultsDB.Close()
+			defer dbenchDB.Close()
 
-			results, err := resultsDB.FetchResultsByGroupIDs(ctx, []string{resultGroupID})
+			benchmarks, err := dbenchDB.FetchBenchmarksByGroupIDs(ctx, []string{benchmarkGroupID})
 			if err != nil {
-				return fmt.Errorf("fetch results by result-group ID: %w", err)
+				return fmt.Errorf("fetch benchmarks by benchmark-group ID: %w", err)
 			}
 
 			// Open data file for gnu plot
@@ -73,15 +73,15 @@ func newPlotCommand() *cobra.Command {
 			dataFile := f.Name()
 			_ = f.Close()
 
-			if err := export.ToGnuplotBasic(results, dataFile); err != nil {
-				return fmt.Errorf("export results to gnuplot: %w", err)
+			if err := export.ToGnuplotBasic(benchmarks, dataFile); err != nil {
+				return fmt.Errorf("export benchmarks to gnuplot: %w", err)
 			}
 
 			// Generate plots using gnuplot
-			plotOutputName := fmt.Sprintf("plot_%s", resultGroupID)
+			plotOutputName := fmt.Sprintf("plot_%s", benchmarkGroupID)
 			outputPath, err := plot.Plot(f.Name(), plotOutputName)
 			if err != nil {
-				return fmt.Errorf("plot results: %w", err)
+				return fmt.Errorf("plot benchmarks: %w", err)
 			}
 
 			fmt.Printf("Plot saved to %s\n", outputPath)

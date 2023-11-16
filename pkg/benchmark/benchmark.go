@@ -170,6 +170,7 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 		"-h", config.Host,
 		// Benchmark config
 		"-M", "extended",
+		"--vacuum-all",
 		"-j", strconv.Itoa(config.NumThreads),
 		"-c", strconv.Itoa(config.NumClients),
 		"-T", totalBenchmarkDuration,

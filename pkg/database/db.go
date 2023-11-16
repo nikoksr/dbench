@@ -4,33 +4,33 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/ent/schema/pulid"
 
 	"github.com/nikoksr/dbench/ent"
+	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"github.com/nikoksr/dbench/pkg/models"
 )
 
 type Database interface {
-	SaveResult(ctx context.Context, res *models.Result) error
-	FetchResults(ctx context.Context, options ...QueryOption) ([]*models.Result, error)
-	FetchResultsByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Result, error)
-	FetchResultsByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Result, error)
+	SaveBenchmark(ctx context.Context, res *models.Benchmark) error
+	FetchBenchmarks(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error)
+	FetchBenchmarksByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
+	FetchBenchmarksByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
 	Close() error
 }
 
-type FilterFunc func(query *ent.ResultQuery) *ent.ResultQuery
+type FilterFunc func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery
 
 type QueryOption func(*QueryOptions)
 
 type QueryOptions struct {
 	// You can add more fields as necessary to handle different options
-	OrderBy func(query *ent.ResultQuery) *ent.ResultQuery
+	OrderBy func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery
 	Filters []FilterFunc
 	Limit   int
 	Offset  int
 }
 
-func WithOrderBy(orderFunc func(query *ent.ResultQuery) *ent.ResultQuery) QueryOption {
+func WithOrderBy(orderFunc func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery) QueryOption {
 	return func(opts *QueryOptions) {
 		opts.OrderBy = orderFunc
 	}
@@ -54,7 +54,7 @@ func WithOffset(offset int) QueryOption {
 	}
 }
 
-func applyQueryOptions(query *ent.ResultQuery, opts ...QueryOption) (*ent.ResultQuery, error) {
+func applyQueryOptions(query *ent.BenchmarkQuery, opts ...QueryOption) (*ent.BenchmarkQuery, error) {
 	qo := &QueryOptions{} // Initialize with default options
 	for _, opt := range opts {
 		opt(qo) // Apply each option to the options

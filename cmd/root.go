@@ -9,7 +9,7 @@ import (
 	"github.com/nikoksr/dbench/pkg/buildinfo"
 )
 
-var resultsDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)
+var dbenchDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{

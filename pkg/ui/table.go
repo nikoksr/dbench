@@ -13,19 +13,19 @@ import (
 
 // Renderer defines the interface for rendering tables.
 type Renderer interface {
-	Render([]*models.Result) string
+	Render([]*models.Benchmark) string
 }
 
-// ResultTableRenderer implements Renderer for the Result model.
-type ResultTableRenderer struct{}
+// BenchmarksTableRenderer implements Renderer for the Benchmark model.
+type BenchmarksTableRenderer struct{}
 
-// NewResultTableRenderer creates a new instance of ResultTableRenderer.
-func NewResultTableRenderer() *ResultTableRenderer {
-	return &ResultTableRenderer{}
+// NewBenchmarksTableRenderer creates a new instance of BenchmarksTableRenderer.
+func NewBenchmarksTableRenderer() *BenchmarksTableRenderer {
+	return &BenchmarksTableRenderer{}
 }
 
-// Render renders the table for a slice of Results.
-func (r *ResultTableRenderer) Render(results []*models.Result) string {
+// Render renders the table for a slice of benchmarks.
+func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string {
 	var sb strings.Builder
 	t := table.NewWriter()
 	t.SetOutputMirror(&sb)
@@ -40,17 +40,17 @@ func (r *ResultTableRenderer) Render(results []*models.Result) string {
 		"Conn Time",
 		"Created At",
 	})
-	for _, result := range results {
+	for _, benchmark := range benchmarks {
 		t.AppendRow(table.Row{
-			result.ID,
-			result.GroupID,
-			result.Clients,
-			result.Threads,
-			result.Transactions,
-			fmt.Sprintf("%.2f", result.TransactionsPerSecond),
-			result.AverageLatency,
-			result.InitialConnectionTime,
-			result.CreatedAt,
+			benchmark.ID,
+			benchmark.GroupID,
+			benchmark.Clients,
+			benchmark.Threads,
+			benchmark.Edges.Result.Transactions,
+			fmt.Sprintf("%.2f", benchmark.Edges.Result.TransactionsPerSecond),
+			benchmark.Edges.Result.AverageLatency,
+			benchmark.Edges.Result.ConnectionTime,
+			benchmark.CreatedAt,
 		})
 	}
 

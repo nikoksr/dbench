@@ -13,13 +13,14 @@ var dbenchDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               buildinfo.AppName + " [command]",
-		Short:             "A nifty wrapper around pgbench that comes with plotting and result management.",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: cobra.NoFileCompletions,
-		Version:           buildinfo.Version,
+		Use:                   buildinfo.AppName + " [COMMAND]",
+		Short:                 "A nifty wrapper around pgbench that comes with plotting and result management.",
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.NoArgs,
+		ValidArgsFunction:     cobra.NoFileCompletions,
+		Version:               buildinfo.Version,
 	}
 
 	// Print the version number without the app name
@@ -32,15 +33,11 @@ func newRootCommand() *cobra.Command {
 
 	// Subcommands
 	cmd.AddCommand(
-		// Commands
 		newBenchRunCommand(nil),
 		newBenchInitCommand(nil),
 		newBenchListCommand(),
 		newBenchExportCommand(),
 		newPlotCommand(),
-
-		// Deprecated commands
-		newBenchCommand(),
 	)
 
 	return cmd

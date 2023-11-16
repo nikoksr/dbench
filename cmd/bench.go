@@ -48,39 +48,6 @@ https://www.postgresql.org/docs/current/pgbench.html
 `)
 )
 
-func newBenchCommand() *cobra.Command {
-	// Configuration for the benchmark command
-	var benchConfig models.BenchmarkConfig
-
-	cmd := &cobra.Command{
-		Use:               "bench [command]",
-		Aliases:           []string{"b"},
-		GroupID:           "commands",
-		Short:             "Manage and run your database benchmarks",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: cobra.NoFileCompletions,
-		Hidden:            true,
-		Deprecated:        "all subcommands have been moved to the root command. Use run, init, list and export directly instead.",
-	}
-
-	cmd.AddGroup(&cobra.Group{
-		ID:    "commands",
-		Title: "Commands",
-	})
-
-	// Bench subcommands
-	cmd.AddCommand(
-		newBenchInitCommand(&benchConfig),
-		newBenchRunCommand(&benchConfig),
-		newBenchListCommand(),
-		newBenchExportCommand(),
-	)
-
-	return cmd
-}
-
 func printBenchStarting(numSets int) {
 	// Calculate estimated runtime
 	estimatedRuntime := time.Duration(numSets) * time.Second * 5 // 5 seconds per set. Clean this up, works for now.
@@ -104,13 +71,14 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:               "run",
-		Aliases:           []string{"r"},
-		GroupID:           "commands",
-		Short:             "Run an array of benchmarks against a PostgreSQL database",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		ValidArgsFunction: cobra.NoFileCompletions,
+		Use:                   "run [OPTIONS]",
+		Aliases:               []string{"r"},
+		GroupID:               "commands",
+		Short:                 "Run an array of benchmarks against a PostgreSQL database",
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if PGPASSWORD is set
 			if os.Getenv("PGPASSWORD") == "" {
@@ -183,6 +151,7 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	cmd.Flags().StringVar(&benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")
 	cmd.Flags().IntSliceVar(&clients, "clients", []int{1, 2, 4, 8, 16, 32, 64, 128, 256}, "List of number of clients to benchmark with")
 	cmd.Flags().IntVar(&benchConfig.NumThreads, "threads", 1, "Number of threads to use")
+	cmd.Flags().StringVarP(&benchConfig.Comment, "comment", "c", "", "Comment to add some optional information to the benchmark")
 
 	return cmd
 }
@@ -193,7 +162,7 @@ func newBenchInitCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "init",
+		Use:     "init [OPTIONS]",
 		Aliases: []string{"i"},
 		GroupID: "commands",
 		Short:   "Initialize a target database using pgbench",
@@ -207,9 +176,10 @@ For consistency reasons, it is HIGHLY recommended to use this command instead of
 For more information, see the official documentation:
 https://www.postgresql.org/docs/current/pgbench.html
 `,
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		ValidArgsFunction: cobra.NoFileCompletions,
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if PGPASSWORD is set
 			if os.Getenv("PGPASSWORD") == "" {
@@ -268,14 +238,15 @@ func newBenchListCommand() *cobra.Command {
 	var sort []string
 
 	cmd := &cobra.Command{
-		Use:               "list",
-		Aliases:           []string{"l", "ls"},
-		GroupID:           "commands",
-		Short:             "List previously run benchmarks",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: cobra.NoFileCompletions,
+		Use:                   "list [OPTIONS]",
+		Aliases:               []string{"l", "ls"},
+		GroupID:               "commands",
+		Short:                 "List previously run benchmarks",
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.NoArgs,
+		ValidArgsFunction:     cobra.NoFileCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
@@ -324,14 +295,15 @@ func newBenchExportCommand() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:               "export",
-		Aliases:           []string{"e"},
-		GroupID:           "commands",
-		Short:             "Export all benchmarks to a format of your choice",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		Args:              cobra.NoArgs,
-		ValidArgsFunction: cobra.NoFileCompletions,
+		Use:                   "export [OPTIONS]",
+		Aliases:               []string{"e"},
+		GroupID:               "commands",
+		Short:                 "Export all benchmarks to a format of your choice",
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.NoArgs,
+		ValidArgsFunction:     cobra.NoFileCompletions,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()

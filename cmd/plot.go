@@ -31,14 +31,15 @@ http://www.gnuplot.info/
 
 func newPlotCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "plot [OPTION] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
-		Aliases:           []string{"p"},
-		GroupID:           "commands",
-		Short:             "Plot benchmarks of a benchmark benchmark-group",
-		SilenceUsage:      true,
-		SilenceErrors:     true,
-		Args:              cobra.MinimumNArgs(1),
-		ValidArgsFunction: cobra.NoFileCompletions,
+		Use:                   "plot [OPTIONS] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
+		Aliases:               []string{"p"},
+		GroupID:               "commands",
+		Short:                 "Plot benchmark results by benchmark-groups",
+		SilenceUsage:          true,
+		SilenceErrors:         true,
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.MinimumNArgs(1),
+		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if gnuplot is installed
 			if _, err := exec.LookPath("gnuplot"); err != nil {

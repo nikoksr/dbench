@@ -48,6 +48,7 @@ func (db *EntDatabase) SaveBenchmark(ctx context.Context, benchmark *models.Benc
 
 	_benchmark, err := tx.Benchmark.Create().
 		SetGroupID(benchmark.GroupID).
+		SetComment(benchmark.Comment).
 		SetVersion(benchmark.Version).
 		SetCommand(benchmark.Command).
 		SetTransactionType(benchmark.TransactionType).

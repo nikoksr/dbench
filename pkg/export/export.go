@@ -36,6 +36,7 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 		// Config
 		"ID",
 		"GroupID",
+		"Comment",
 		"Version",
 		"Command",
 		"TransactionType",
@@ -86,6 +87,7 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 			// Config
 			benchmark.ID.String(),
 			benchmark.GroupID.String(),
+			benchmark.Comment,
 			benchmark.Version,
 			benchmark.Command,
 			benchmark.TransactionType,

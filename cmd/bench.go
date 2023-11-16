@@ -324,11 +324,12 @@ func newBenchExportCommand() *cobra.Command {
 			}
 
 			// Export benchmarks
+			var dataFile string
 			switch format {
 			case "csv":
-				err = export.ToCSV(benchmarks, generateExportFileName("csv"))
+				dataFile, err = export.ToCSV(benchmarks, generateExportFileName("csv"))
 			case "json":
-				err = export.ToJSON(benchmarks, generateExportFileName("json"))
+				dataFile, err = export.ToJSON(benchmarks, generateExportFileName("json"))
 			default:
 				return fmt.Errorf("unknown export format: %s", format)
 			}
@@ -336,6 +337,8 @@ func newBenchExportCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("export benchmarks: %w", err)
 			}
+
+			fmt.Printf("Exported benchmarks to %q\n", dataFile)
 
 			return nil
 		},

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/pkg/buildinfo"
 	"github.com/nikoksr/dbench/pkg/database"
 	"github.com/nikoksr/dbench/pkg/export"
 	"github.com/nikoksr/dbench/pkg/plot"
@@ -29,7 +29,26 @@ For more information, see the official documentation:
 http://www.gnuplot.info/
 `)
 
+func prepareDirectory(dir string) error {
+	// Clean directory path
+	dir = filepath.Clean(dir)
+
+	// Create output directory if it doesn't exist
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("create output directory: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func newPlotCommand() *cobra.Command {
+	var (
+		outputDir      string
+		cleanOutputDir bool
+	)
+
 	cmd := &cobra.Command{
 		Use:                   "plot [OPTIONS] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
 		Aliases:               []string{"p"},
@@ -54,9 +73,21 @@ func newPlotCommand() *cobra.Command {
 			// Get benchmark-group IDs
 			benchmarkGroupIDs := args
 
+			// Cleanup output directory
+			if cleanOutputDir {
+				if err := os.RemoveAll(outputDir); err != nil {
+					return fmt.Errorf("cleanup output directory: %w", err)
+				}
+			}
+
+			// Prepare output directory
+			if err := prepareDirectory(outputDir); err != nil {
+				return fmt.Errorf("prepare output directory: %w", err)
+			}
+
 			// Plot benchmarks
 			for _, id := range benchmarkGroupIDs {
-				if err := plotBenchmarks(ctx, id); err != nil {
+				if err := plotBenchmarks(ctx, id, outputDir); err != nil {
 					return fmt.Errorf("plot benchmark-group %q: %w", id, err)
 				}
 			}
@@ -65,10 +96,13 @@ func newPlotCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVarP(&outputDir, "output", "o", "dbench/plots", "Output directory for plots")
+	cmd.Flags().BoolVarP(&cleanOutputDir, "clean", "c", false, "Cleanup output directory before plotting")
+
 	return cmd
 }
 
-func plotBenchmarks(ctx context.Context, id string) error {
+func plotBenchmarks(ctx context.Context, id, outputDir string) error {
 	dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 	if err != nil {
 		return fmt.Errorf("create dbench database: %w", err)
@@ -84,28 +118,19 @@ func plotBenchmarks(ctx context.Context, id string) error {
 		return fmt.Errorf("no benchmarks found for benchmark-group %q", id)
 	}
 
-	// Open data file for gnu plot
-	f, err := os.CreateTemp("", buildinfo.AppName+".*.txt")
+	dataFile, err := export.ToCSV(benchmarks, "")
 	if err != nil {
-		return fmt.Errorf("create data file: %w", err)
+		return fmt.Errorf("export benchmarks to CSV: %w", err)
 	}
-	defer func() { _ = os.Remove(f.Name()) }()
 
-	dataFile := f.Name()
-	_ = f.Close()
-
-	if err := export.ToGnuplotBasic(benchmarks, dataFile); err != nil {
-		return fmt.Errorf("export benchmarks to gnuplot: %w", err)
-	}
+	fmt.Printf("Exported benchmarks to %q.\n", dataFile)
 
 	// Generate plots using gnuplot
-	plotOutputName := fmt.Sprintf("plot_%s", id)
-	outputPath, err := plot.Plot(f.Name(), plotOutputName)
-	if err != nil {
+	if err := plot.Plot(ctx, dataFile, outputDir); err != nil {
 		return fmt.Errorf("plot benchmarks: %w", err)
 	}
 
-	fmt.Printf("Plot saved to: %s\n", outputPath)
+	fmt.Printf("Plots successfully generated! Check the output directory %q.\n", outputDir)
 
 	return nil
 }

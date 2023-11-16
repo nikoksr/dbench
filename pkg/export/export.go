@@ -4,27 +4,24 @@ package export
 import (
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
+	"github.com/nikoksr/dbench/pkg/buildinfo"
+	"github.com/nikoksr/dbench/pkg/models"
 	"os"
 	"strconv"
-	"time"
-
-	"github.com/nikoksr/dbench/pkg/models"
 )
 
-func openFile(filename string) (*os.File, error) {
-	file, err := os.Create(filename)
-	if err != nil {
-		return nil, err
+func createFile(name, extension string) (*os.File, error) {
+	if name == "" {
+		return os.CreateTemp("", buildinfo.AppName+"-*."+extension)
 	}
-	return file, nil
+	return os.Create(name)
 }
 
-// ToCSV exports a slice of Benchmark structs to a CSV file.
-func ToCSV(benchmarks []*models.Benchmark, filename string) error {
-	file, err := openFile(filename)
+// ToCSV exports a slice of Benchmark structs to a CSV file. An empty filename will create a temporary file.
+func ToCSV(benchmarks []*models.Benchmark, filename string) (string, error) {
+	file, err := createFile(filename, "csv")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
@@ -40,14 +37,13 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 		"Version",
 		"Command",
 		"TransactionType",
-		"ScalingFactor",
 		"QueryMode",
+		"ScalingFactor",
 		"Clients",
 		"Threads",
 		// PGbench result
 		"Transactions",
 		"TransactionsPerSecond",
-		"TransactionsPerClient",
 		"FailedTransactions",
 		"AverageLatency",
 		"ConnectionTime",
@@ -61,8 +57,6 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 		"CPU90thLoad",
 		"CPU95thLoad",
 		"CPU99thLoad",
-		"CPU999thLoad",
-		"CPU9999thLoad",
 		// Memory
 		"MemoryMinLoad",
 		"MemoryMaxLoad",
@@ -72,13 +66,11 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 		"Memory90thLoad",
 		"Memory95thLoad",
 		"Memory99thLoad",
-		"Memory999thLoad",
-		"Memory9999thLoad",
 		// Misc
 		"CreatedAt",
 	}
 	if err := writer.Write(header); err != nil {
-		return err
+		return "", err
 	}
 
 	// Write data rows
@@ -91,78 +83,58 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) error {
 			benchmark.Version,
 			benchmark.Command,
 			benchmark.TransactionType,
-			strconv.FormatFloat(benchmark.ScalingFactor, 'f', 6, 64),
 			benchmark.QueryMode,
+			strconv.FormatFloat(benchmark.ScalingFactor, 'f', 2, 64),
 			strconv.Itoa(benchmark.Clients),
 			strconv.Itoa(benchmark.Threads),
 			// PGbench result
 			strconv.Itoa(benchmark.Edges.Result.Transactions),
-			strconv.FormatFloat(benchmark.Edges.Result.TransactionsPerSecond, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.Result.TransactionsPerSecond, 'f', 2, 64),
 			strconv.Itoa(benchmark.Edges.Result.FailedTransactions),
 			benchmark.Edges.Result.AverageLatency.String(),
 			benchmark.Edges.Result.ConnectionTime.String(),
 			benchmark.Edges.Result.TotalRuntime.String(),
 			// CPU
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMinLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMaxLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUAverageLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU50thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU75thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU90thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU95thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU99thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMinLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMaxLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUAverageLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU50thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU75thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU90thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU95thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU99thLoad, 'f', 2, 64),
 			// Memory
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMinLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMaxLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryAverageLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory50thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory75thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory90thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory95thLoad, 'f', 6, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory99thLoad, 'f', 6, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMinLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMaxLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryAverageLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory50thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory75thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory90thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory95thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory99thLoad, 'f', 2, 64),
 			// Misc
-			benchmark.CreatedAt.String(),
+			benchmark.CreatedAt.Local().Format("2006-01-02 15:04:05"),
 		}
 		if err := writer.Write(record); err != nil {
-			return err
+			return "", err
 		}
 	}
 
-	return nil
+	return file.Name(), nil
 }
 
-// ToJSON takes an interface and attempts to marshal it into JSON format, then write to a file.
-func ToJSON(data any, filename string) error {
-	file, err := openFile(filename)
+// ToJSON takes an interface and attempts to marshal it into JSON format, then write to a file. An empty filename will
+// create a temporary file.
+func ToJSON(data any, filename string) (string, error) {
+	file, err := createFile(filename, "json")
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
-	return encoder.Encode(data)
-}
-
-// ToGnuplotBasic exports a slice of Benchmark structs to a Gnuplot compatible .dat file.
-func ToGnuplotBasic(benchmarks []*models.Benchmark, filename string) error {
-	file, err := openFile(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	for _, benchmark := range benchmarks {
-		line := fmt.Sprintf("%d %f %d %d\n",
-			benchmark.Clients,
-			benchmark.Edges.Result.TransactionsPerSecond,
-			time.Duration(benchmark.Edges.Result.AverageLatency).Milliseconds(),
-			time.Duration(benchmark.Edges.Result.ConnectionTime).Milliseconds(),
-		)
-		_, err := fmt.Fprint(file, line)
-		if err != nil {
-			return fmt.Errorf("write to file: %w", err)
-		}
+	if err := json.NewEncoder(file).Encode(data); err != nil {
+		return "", err
 	}
 
-	return nil
+	return file.Name(), nil
 }

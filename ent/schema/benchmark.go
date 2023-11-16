@@ -30,6 +30,9 @@ func (BenchmarkMixin) Fields() []ent.Field {
 		field.String("group_id").
 			GoType(pulid.ID("")).
 			Immutable(),
+		// An optional comment for the benchmark.
+		field.String("comment").
+			Optional(),
 		// Remaining fields are optional and cannot be changed once set.
 		field.String("version").
 			Optional().

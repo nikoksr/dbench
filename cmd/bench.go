@@ -183,6 +183,7 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 	cmd.Flags().StringVar(&benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")
 	cmd.Flags().IntSliceVar(&clients, "clients", []int{1, 2, 4, 8, 16, 32, 64, 128, 256}, "List of number of clients to benchmark with")
 	cmd.Flags().IntVar(&benchConfig.NumThreads, "threads", 1, "Number of threads to use")
+	cmd.Flags().StringVarP(&benchConfig.Comment, "comment", "c", "", "Comment to add some optional information to the benchmark")
 
 	return cmd
 }

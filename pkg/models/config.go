@@ -18,6 +18,7 @@ type BenchmarkConfig struct {
 	Mode       BenchmarkMode // Mode is the benchmarking mode
 	NumThreads int           // NumThreads is the number of threads to use
 	NumClients int           // NumClients is the number of clients to use
+	Comment    string        // Comment is a comment to add to the benchmark
 }
 
 func (c *BenchmarkConfig) Sanitize() {

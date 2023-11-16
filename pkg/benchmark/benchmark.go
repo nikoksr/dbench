@@ -258,7 +258,8 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 
 	// Add the missing pieces to the benchmark
 
-	// Store the command that was executed to run the benchmark
+	// Store meta information
+	benchmark.Comment = config.Comment
 	benchmark.Command = cmd.String()
 
 	// Store the system metrics

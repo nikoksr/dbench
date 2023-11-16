@@ -319,8 +319,8 @@ func newBenchExportCommand() *cobra.Command {
 	var format string
 
 	generateExportFileName := func(fileFormat string) string {
-		localTime := time.Now().Local().String()
-		return fmt.Sprintf("%s_%s.%s", buildinfo.AppName, localTime, fileFormat)
+		localTime := time.Now().Local().Format("2006-01-02_15-04-05")
+		return fmt.Sprintf("%s-export_%s.%s", buildinfo.AppName, localTime, fileFormat)
 	}
 
 	cmd := &cobra.Command{

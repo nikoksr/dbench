@@ -347,6 +347,10 @@ func newBenchExportCommand() *cobra.Command {
 				return fmt.Errorf("fetch benchmarks: %w", err)
 			}
 
+			if len(benchmarks) == 0 {
+				return fmt.Errorf("no benchmarks found")
+			}
+
 			// Export benchmarks
 			switch format {
 			case "csv":

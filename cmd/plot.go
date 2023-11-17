@@ -123,8 +123,6 @@ func plotBenchmarks(ctx context.Context, id, outputDir string) error {
 		return fmt.Errorf("export benchmarks to CSV: %w", err)
 	}
 
-	fmt.Printf("Exported benchmarks to %q.\n", dataFile)
-
 	// Generate plots using gnuplot
 	if err := plot.Plot(ctx, dataFile, outputDir); err != nil {
 		return fmt.Errorf("plot benchmarks: %w", err)

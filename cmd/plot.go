@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -61,7 +60,7 @@ func newPlotCommand() *cobra.Command {
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if gnuplot is installed
-			if _, err := exec.LookPath("gnuplot"); err != nil {
+			if !isToolInPath("gnuplot") {
 				return gnuPlotNotInstalledErr
 			}
 

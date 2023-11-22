@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -116,7 +115,7 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if pgbench is installed
-			if _, err := exec.LookPath("pgbench"); err != nil {
+			if !isToolInPath("pgbench") {
 				return errPgbenchNotInstalled
 			}
 
@@ -222,7 +221,7 @@ https://www.postgresql.org/docs/current/pgbench.html
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if pgbench is installed
-			if _, err := exec.LookPath("pgbench"); err != nil {
+			if !isToolInPath("pgbench") {
 				return errPgbenchNotInstalled
 			}
 

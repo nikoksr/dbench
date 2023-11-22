@@ -7,6 +7,7 @@ type BenchmarkConfig struct {
 	// Database
 	DBName   string
 	Username string
+	Password string
 	Host     string
 	Port     string
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -178,6 +179,9 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 		config.DBName,
 	)
 
+	// Add PGPASSWORD to the environment of the sub-process
+	cmd.Env = append(os.Environ(), "PGPASSWORD="+config.Password)
+
 	// Create buffers to capture stdout and stderr
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -210,7 +214,7 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 	}()
 
 	// Execute pgbench
-	fmt.Printf("  > Running: %s\n", cmd.String())
+	fmt.Printf("==== Running: %s\n", cmd.String())
 	eg.Go(func() error {
 		err := cmd.Run()
 		close(stopChan) // Stop system monitoring
@@ -270,13 +274,11 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 
 // Init initializes a target database using pgbench
 func Init(config *models.BenchmarkConfig) error {
-	var cmd *exec.Cmd
-
 	// Fill the config with default values
 	config.Sanitize()
 
 	// Construct the pgbench command
-	cmd = exec.Command(
+	cmd := exec.Command(
 		"pgbench",
 		// Connection settings
 		"-U", config.Username,
@@ -290,13 +292,16 @@ func Init(config *models.BenchmarkConfig) error {
 		config.DBName,
 	)
 
+	// Add PGPASSWORD to the environment of the sub-process
+	cmd.Env = append(os.Environ(), "PGPASSWORD="+config.Password)
+
 	// Create buffers to capture stdout and stderr
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	// Execute the command
-	fmt.Printf("Running command: %s\n", cmd.String())
+	fmt.Printf("== Running command: %s\n", cmd.String())
 
 	err := cmd.Run()
 	if err != nil {

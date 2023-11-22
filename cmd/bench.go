@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,7 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/spf13/cobra"
-	typeid "go.jetpack.io/typeid/typed"
+	"go.jetpack.io/typeid"
 
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/schema/duration"
@@ -23,7 +24,7 @@ import (
 )
 
 var (
-	noPasswordErr = fmt.Errorf(`Environment variable PGPASSWORD must be set to the password of the specified PostgreSQL user.
+	errNoPassword = errors.New(`No password provided. You can either enter a password or set the PGPASSWORD environment variable:
 
 	# Example
 	export PGPASSWORD=supersecret
@@ -32,7 +33,7 @@ For more information, see the official documentation:
 https://www.postgresql.org/docs/current/libpq-envars.html
 `)
 
-	pgbenchNotInstalledErr = fmt.Errorf(`pgbench is required to run the application. It can be installed with the following command:
+	errPgbenchNotInstalled = errors.New(`pgbench is required to run the application. It can be installed with the following command:
 
 	# Arch
 	sudo pacman -S postgresql
@@ -52,15 +53,49 @@ func printBenchStarting(numSets int) {
 	// Calculate estimated runtime
 	estimatedRuntime := time.Duration(numSets) * time.Second * 5 // 5 seconds per set. Clean this up, works for now.
 
-	title := fmt.Sprintf(" Starting benchmarks! Estimated total runtime: %s", estimatedRuntime)
+	title := fmt.Sprintf("== Starting benchmarks! Estimated total runtime: %s", estimatedRuntime)
 
-	fmt.Printf("%s\n\n", ui.TextBox(title))
+	fmt.Printf("%s\n\n%s\n\n", ui.HorizontalSeparator(true), title)
 }
 
 func printBenchComplete(groupID string) {
-	title := fmt.Sprintf(" Benchmarks complete! Run the following command to plot the results:\n\n\t%s plot %s", buildinfo.AppName, groupID)
+	title := fmt.Sprintf("== Benchmarks complete! Run the following command to plot the results:\n\n\t%s plot %s", buildinfo.AppName, groupID)
 
-	fmt.Printf("\n%s\n\n", ui.TextBox(title))
+	fmt.Printf("\n%s\n\n%s\n\n", ui.HorizontalSeparator(true), title)
+}
+
+func getDBPassword() (string, bool, error) {
+	// Check if PGPASSWORD is set
+	passwd := os.Getenv("PGPASSWORD")
+
+	fmt.Println()
+	if passwd != "" {
+		fmt.Printf("== Detected PGPASSWORD - leave the following prompt empty to use it.\n\n")
+	}
+
+	// Prompt for password
+	prompt := ui.NewPrompt("== Enter database password:", "Password", true)
+	if err := prompt.Render(); err != nil {
+		return "", false, err
+	}
+
+	// If the user canceled the prompt, return. Signal that we don't want to continue.
+	if prompt.WasCanceled() {
+		return "", true, nil
+	}
+
+	// If the user entered a password, return it
+	if prompt.Value() != "" {
+		return prompt.Value(), false, nil
+	}
+
+	// No password entered, if PGPASSWORD is set, return it
+	if passwd != "" {
+		return passwd, false, nil
+	}
+
+	// No password entered and PGPASSWORD is not set, return an error
+	return "", false, errNoPassword
 }
 
 func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
@@ -80,30 +115,35 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 		DisableFlagsInUseLine: true,
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check if PGPASSWORD is set
-			if os.Getenv("PGPASSWORD") == "" {
-				return noPasswordErr
-			}
-
 			// Check if pgbench is installed
 			if _, err := exec.LookPath("pgbench"); err != nil {
-				return pgbenchNotInstalledErr
+				return errPgbenchNotInstalled
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
 			// Open database connection
+			ctx := cmd.Context()
 			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			if err != nil {
 				return fmt.Errorf("create dbench database: %w", err)
 			}
 			defer dbenchDB.Close()
 
+			// Prompt for password
+			password, canceled, err := getDBPassword()
+			if err != nil {
+				return fmt.Errorf("get database password: %w", err)
+			}
+			if canceled {
+				return nil
+			}
+
+			benchConfig.Password = password
+
 			// Generate a new benchmark group id. This is mostly helpful for the analysis of the benchmarks.
-			benchmarkGroupID, err := typeid.New[models.BenchmarkGroupID]()
+			benchmarkGroupID, err := typeid.WithPrefix("bmkgrp")
 			if err != nil {
 				return fmt.Errorf("create benchmark group id: %w", err)
 			}
@@ -181,19 +221,25 @@ https://www.postgresql.org/docs/current/pgbench.html
 		DisableFlagsInUseLine: true,
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check if PGPASSWORD is set
-			if os.Getenv("PGPASSWORD") == "" {
-				return noPasswordErr
-			}
-
 			// Check if pgbench is installed
 			if _, err := exec.LookPath("pgbench"); err != nil {
-				return pgbenchNotInstalledErr
+				return errPgbenchNotInstalled
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Prompt for password
+			password, canceled, err := getDBPassword()
+			if err != nil {
+				return fmt.Errorf("get database password: %w", err)
+			}
+			if canceled {
+				return nil
+			}
+
+			benchConfig.Password = password
+
 			return benchmark.Init(benchConfig)
 		},
 	}
@@ -338,7 +384,7 @@ func newBenchExportCommand() *cobra.Command {
 				return fmt.Errorf("export benchmarks: %w", err)
 			}
 
-			fmt.Printf("Exported benchmarks to %q\n", dataFile)
+			fmt.Printf("\n== Exported benchmarks to %q\n\n", dataFile)
 
 			return nil
 		},

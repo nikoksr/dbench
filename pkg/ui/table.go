@@ -11,17 +11,16 @@ import (
 	"github.com/nikoksr/dbench/pkg/models"
 )
 
+//
+// FIXME: Move to bubbletea and implement Component interface.
+//
+
 var tableStyle table.Style
 
 func init() {
 	// Customize the table style.
 	tableStyle = table.StyleLight
 	tableStyle.Box = table.StyleBoxRounded
-}
-
-// Renderer defines the interface for rendering tables.
-type Renderer interface {
-	Render([]*models.Benchmark) string
 }
 
 // BenchmarksTableRenderer implements Renderer for the Benchmark model.

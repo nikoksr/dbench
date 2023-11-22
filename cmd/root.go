@@ -21,6 +21,8 @@ func newRootCommand() *cobra.Command {
 		Args:                  cobra.NoArgs,
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		Version:               buildinfo.Version,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		},
 	}
 
 	// Print the version number without the app name
@@ -49,7 +51,7 @@ func Execute() {
 	rootCmd := newRootCommand()
 
 	if err := rootCmd.Execute(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "\n\nError: %s\n", err)
 		os.Exit(1)
 	}
 }

@@ -5,6 +5,7 @@ package pulid
 import (
 	"database/sql/driver"
 	"fmt"
+
 	"go.jetpack.io/typeid"
 )
 
@@ -13,7 +14,7 @@ type ID string
 
 // MustNew returns a new PULID for time.Now() given a prefix. This uses the default entropy source.
 func MustNew(prefix string) ID {
-	return ID(typeid.Must(typeid.New(prefix)).String())
+	return ID(typeid.Must(typeid.WithPrefix(prefix)).String())
 }
 
 // Scan implements the Scanner interface.
@@ -43,6 +44,6 @@ func (u ID) String() string {
 }
 
 // TypeID returns the type id of the PULID.
-func (u ID) TypeID() (typeid.TypeID, error) {
+func (u ID) TypeID() (typeid.AnyID, error) {
 	return typeid.FromString(string(u))
 }

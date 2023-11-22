@@ -68,8 +68,6 @@ func newPlotCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
 			// Get benchmark-group IDs
 			benchmarkGroupIDs := args
 
@@ -86,6 +84,7 @@ func newPlotCommand() *cobra.Command {
 			}
 
 			// Plot benchmarks
+			ctx := cmd.Context()
 			for _, id := range benchmarkGroupIDs {
 				if err := plotBenchmarks(ctx, id, outputDir); err != nil {
 					return fmt.Errorf("plot benchmark-group %q: %w", id, err)
@@ -128,7 +127,7 @@ func plotBenchmarks(ctx context.Context, id, outputDir string) error {
 		return fmt.Errorf("plot benchmarks: %w", err)
 	}
 
-	fmt.Printf("Plots successfully generated! Check the output directory %q.\n", outputDir)
+	fmt.Printf("\n== Plots successfully generated! Check the output directory %q.\n\n", outputDir)
 
 	return nil
 }

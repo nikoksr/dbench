@@ -5,6 +5,9 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/nikoksr/dbench/pkg/styles"
 )
 
 var _ Component = &Prompt{}
@@ -20,6 +23,8 @@ func NewPrompt(text, placeholder string, sensitive bool) *Prompt {
 	ti.Placeholder = placeholder
 	ti.CharLimit = 256
 	ti.Width = 50
+	ti.PromptStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#f8f8f2"))
 	ti.Focus()
 
 	if sensitive {
@@ -94,7 +99,7 @@ func (m *promptModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *promptModel) View() string {
 	return fmt.Sprintf(
 		"%s\n\n%s\n\n%s",
-		m.text,
+		styles.Text.Render(m.text),
 		m.textInput.View(),
 		"",
 	)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -12,6 +11,7 @@ import (
 	"github.com/nikoksr/dbench/pkg/database"
 	"github.com/nikoksr/dbench/pkg/export"
 	"github.com/nikoksr/dbench/pkg/plot"
+	"github.com/nikoksr/dbench/pkg/styles"
 )
 
 var gnuPlotNotInstalledErr = fmt.Errorf(`gnuplot is required to run the application. It can be installed with the following command:
@@ -61,7 +61,7 @@ func newPlotCommand() *cobra.Command {
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if gnuplot is installed
-			if _, err := exec.LookPath("gnuplot"); err != nil {
+			if !isToolInPath("gnuplot") {
 				return gnuPlotNotInstalledErr
 			}
 
@@ -73,9 +73,14 @@ func newPlotCommand() *cobra.Command {
 
 			// Cleanup output directory
 			if cleanOutputDir {
+				fmt.Printf("%s\n", styles.Title.Render("Cleanup"))
+				msg := fmt.Sprintf("Cleaning output directory (%s)", outputDir)
+				fmt.Printf("%s\t", styles.Info.Render(msg))
 				if err := os.RemoveAll(outputDir); err != nil {
+					fmt.Printf("%s\n", styles.Error.Render("✗ Failed"))
 					return fmt.Errorf("cleanup output directory: %w", err)
 				}
+				fmt.Printf("%s\n", styles.Success.Render("✓ Success"))
 			}
 
 			// Prepare output directory
@@ -84,12 +89,20 @@ func newPlotCommand() *cobra.Command {
 			}
 
 			// Plot benchmarks
-			ctx := cmd.Context()
+			fmt.Printf("%s\n", styles.Title.Render("Plotting"))
+			fmt.Printf("%s\n\n", styles.Text.Render("Plotting benchmark-groups"))
 			for _, id := range benchmarkGroupIDs {
-				if err := plotBenchmarks(ctx, id, outputDir); err != nil {
+				fmt.Printf("  %s\t", styles.Info.Render("Plotting "+id))
+				if err := plotBenchmarks(cmd.Context(), id, outputDir); err != nil {
+					fmt.Printf("  %s\n", styles.Error.Render("✗ Failed"))
 					return fmt.Errorf("plot benchmark-group %q: %w", id, err)
 				}
+				fmt.Printf("  %s\n", styles.Success.Render("✓ Success"))
 			}
+
+			title := styles.Title.Render("Results")
+			message := fmt.Sprintf("%s:\n\n $ cd %s", styles.Text.Render("Plotting done! Check out the results in the output directory"), outputDir)
+			fmt.Printf("%s\n%s\n\n", title, message)
 
 			return nil
 		},
@@ -126,8 +139,6 @@ func plotBenchmarks(ctx context.Context, id, outputDir string) error {
 	if err := plot.Plot(ctx, dataFile, outputDir); err != nil {
 		return fmt.Errorf("plot benchmarks: %w", err)
 	}
-
-	fmt.Printf("\n== Plots successfully generated! Check the output directory %q.\n\n", outputDir)
 
 	return nil
 }

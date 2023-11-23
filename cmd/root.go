@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 
@@ -40,6 +41,7 @@ func newRootCommand() *cobra.Command {
 		newBenchListCommand(),
 		newBenchExportCommand(),
 		newPlotCommand(),
+		newDoctorCommand(),
 	)
 
 	return cmd
@@ -54,4 +56,9 @@ func Execute() {
 		_, _ = fmt.Fprintf(os.Stderr, "\n\nError: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+func isToolInPath(tool string) bool {
+	_, err := exec.LookPath(tool)
+	return err == nil
 }

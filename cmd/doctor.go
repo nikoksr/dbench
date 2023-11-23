@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/pkg/buildinfo"
-	"github.com/nikoksr/dbench/pkg/database"
-	"github.com/nikoksr/dbench/pkg/styles"
+	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/database"
+	"github.com/nikoksr/dbench/internal/styles"
 )
 
 func getToolVersion(tool string) (string, error) {
@@ -47,7 +47,7 @@ func newDoctorCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 
-			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s %s", buildinfo.AppName, buildinfo.Version)))
+			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s %s", build.AppName, build.Version)))
 
 			// System information
 			fmt.Printf("%s\n", styles.SubTitle.Render("System Information"))

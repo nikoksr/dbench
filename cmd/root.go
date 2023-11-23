@@ -7,21 +7,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/pkg/buildinfo"
+	"github.com/nikoksr/dbench/internal/build"
 )
 
-var dbenchDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", buildinfo.AppName)
+var dbenchDSN = fmt.Sprintf("file:%s.db?cache=shared&_fk=1", build.AppName)
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   buildinfo.AppName + " [COMMAND]",
+		Use:                   build.AppName + " [COMMAND]",
 		Short:                 "A nifty wrapper around pgbench that comes with plotting and result management.",
 		SilenceUsage:          true,
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.NoArgs,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		Version:               buildinfo.Version,
+		Version:               build.Version,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		},
 	}

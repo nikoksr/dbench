@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"entgo.io/ent/schema/mixin"
-	"github.com/nikoksr/dbench/ent/schema/datetime"
 
+	"github.com/nikoksr/dbench/ent/schema/datetime"
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 )
 

@@ -4,15 +4,16 @@ package export
 import (
 	"encoding/csv"
 	"encoding/json"
-	"github.com/nikoksr/dbench/pkg/buildinfo"
-	"github.com/nikoksr/dbench/pkg/models"
 	"os"
 	"strconv"
+
+	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/models"
 )
 
 func createFile(name, extension string) (*os.File, error) {
 	if name == "" {
-		return os.CreateTemp("", buildinfo.AppName+"-*."+extension)
+		return os.CreateTemp("", build.AppName+"-*."+extension)
 	}
 	return os.Create(name)
 }

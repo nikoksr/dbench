@@ -1,0 +1,38 @@
+run:
+  go: "1.21"
+  timeout: 5m
+linters:
+  enable:
+    - thelper
+    - gofumpt
+    - gci
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - revive
+    - forbidigo
+    - tagliatelle
+    - misspell
+    - depguard
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/nikoksr/dbench)
+  forbidigo:
+    forbid:
+      - 'ioutil\.*'
+  tagliatelle:
+    case:
+      use-field-name: false
+      rules:
+        yaml: snake
+        json: snake
+  depguard:
+    rules:
+      main:
+        deny:
+          - pkg: "github.com/pkg/errors"
+            desc: "use stdlib instead"

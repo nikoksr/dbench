@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
-	"github.com/nikoksr/dbench/pkg/models"
+	"github.com/nikoksr/dbench/internal/models"
 )
 
 func MonitorSystem(interval time.Duration, stopChan <-chan struct{}, sampleChan chan<- models.SystemSample) error {

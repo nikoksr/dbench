@@ -7,8 +7,8 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
-	"github.com/nikoksr/dbench/ent/schema/datetime"
 
+	"github.com/nikoksr/dbench/ent/schema/datetime"
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 )

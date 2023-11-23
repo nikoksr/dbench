@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/nikoksr/dbench/pkg/plot/gnuplot"
+	gnuplot2 "github.com/nikoksr/dbench/internal/plot/gnuplot"
 )
 
 type plotData struct {
@@ -31,7 +31,7 @@ func executeScriptTemplate(name, text string, data plotData) (string, error) {
 }
 
 func Plot(ctx context.Context, dataFile, outputDir string) error {
-	for name, template := range gnuplot.ScriptTemplates {
+	for name, template := range gnuplot2.ScriptTemplates {
 		// outputPath is the template output dir + the template name + .png
 		outputPath := filepath.Join(outputDir, name+".png")
 
@@ -46,7 +46,7 @@ func Plot(ctx context.Context, dataFile, outputDir string) error {
 			return fmt.Errorf("execute gnuplot script template %q: %w", name, err)
 		}
 
-		if err := gnuplot.ExecuteScript(ctx, script); err != nil {
+		if err := gnuplot2.ExecuteScript(ctx, script); err != nil {
 			return fmt.Errorf("execute gnuplot script %q: %w", name, err)
 		}
 	}

@@ -14,9 +14,9 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/nikoksr/dbench/ent/schema/duration"
-	"github.com/nikoksr/dbench/pkg/models"
-	"github.com/nikoksr/dbench/pkg/probing"
-	"github.com/nikoksr/dbench/pkg/styles"
+	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/probing"
+	"github.com/nikoksr/dbench/internal/styles"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.

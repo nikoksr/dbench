@@ -9,7 +9,7 @@ import (
 
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/benchmark"
-	"github.com/nikoksr/dbench/pkg/models"
+	"github.com/nikoksr/dbench/internal/models"
 )
 
 var _ Database = (*EntDatabase)(nil) // Ensure that EntDatabase implements the Database interface

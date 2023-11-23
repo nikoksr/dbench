@@ -14,13 +14,13 @@ import (
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/ent/schema/pulid"
-	"github.com/nikoksr/dbench/pkg/benchmark"
-	"github.com/nikoksr/dbench/pkg/buildinfo"
-	"github.com/nikoksr/dbench/pkg/database"
-	"github.com/nikoksr/dbench/pkg/export"
-	"github.com/nikoksr/dbench/pkg/models"
-	"github.com/nikoksr/dbench/pkg/styles"
-	"github.com/nikoksr/dbench/pkg/ui"
+	"github.com/nikoksr/dbench/internal/benchmark"
+	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/database"
+	"github.com/nikoksr/dbench/internal/export"
+	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/ui"
 )
 
 var (
@@ -63,7 +63,7 @@ func printBenchStarting(numSets int) {
 func printBenchComplete(groupID string) {
 	title := styles.Title.Render("Results")
 	benchCompleteMsg := styles.Text.Render("Benchmarks complete! Run the following command to plot the results")
-	plotCmd := styles.Info.Render(fmt.Sprintf("$ %s plot %s", buildinfo.AppName, groupID))
+	plotCmd := styles.Info.Render(fmt.Sprintf("$ %s plot %s", build.AppName, groupID))
 	message := fmt.Sprintf("%s:\n\n  %s", benchCompleteMsg, plotCmd)
 	fmt.Printf("%s\n%s\n\n", title, message)
 }
@@ -347,7 +347,7 @@ func newBenchExportCommand() *cobra.Command {
 
 	generateExportFileName := func(fileFormat string) string {
 		localTime := time.Now().Local().Format("2006-01-02_15-04-05")
-		return fmt.Sprintf("%s-export_%s.%s", buildinfo.AppName, localTime, fileFormat)
+		return fmt.Sprintf("%s-export_%s.%s", build.AppName, localTime, fileFormat)
 	}
 
 	cmd := &cobra.Command{

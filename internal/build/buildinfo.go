@@ -1,4 +1,4 @@
-package buildinfo
+package build
 
 // AppName is the name of the application
 const AppName = "dbench"

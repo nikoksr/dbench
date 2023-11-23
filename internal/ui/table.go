@@ -8,7 +8,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
-	"github.com/nikoksr/dbench/pkg/models"
+	"github.com/nikoksr/dbench/internal/models"
 )
 
 //

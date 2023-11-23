@@ -10,6 +10,7 @@ import (
 
 	"github.com/nikoksr/dbench/pkg/buildinfo"
 	"github.com/nikoksr/dbench/pkg/database"
+	"github.com/nikoksr/dbench/pkg/styles"
 )
 
 func getToolVersion(tool string) (string, error) {
@@ -46,46 +47,46 @@ func newDoctorCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 
-			fmt.Printf("\n%s\n", styleTitle.Render(fmt.Sprintf("%s %s", buildinfo.AppName, buildinfo.Version)))
+			fmt.Printf("\n%s\n", styles.Title.Render(fmt.Sprintf("%s %s", buildinfo.AppName, buildinfo.Version)))
 
 			// System information
-			fmt.Printf("\n%s\n", styleSubTitle.Render("System Information"))
+			fmt.Printf("\n%s\n", styles.SubTitle.Render("System Information"))
 			fmt.Printf("  OS: %s\n", runtime.GOOS)
 			fmt.Printf("  Architecture: %s\n", runtime.GOARCH)
 
 			// Check dbench database
-			fmt.Printf("\n%s\n", styleSubTitle.Render("Checking dbench database..."))
-			fmt.Print(styleInfo.Render("  Connecting ... "))
+			fmt.Printf("\n%s\n", styles.SubTitle.Render("Checking dbench database..."))
+			fmt.Print(styles.Info.Render("  Connecting ... "))
 
 			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
 			_ = dbenchDB.Close()
 
 			if err != nil {
-				fmt.Printf("%s %s\n", styleError.Render("✗ Error:"), err)
+				fmt.Printf("%s %s\n", styles.Error.Render("✗ Error:"), err)
 				return
 			} else {
-				fmt.Println(styleSuccess.Render("✓ Success"))
+				fmt.Println(styles.Success.Render("✓ Success"))
 			}
 
 			// Check required tools
-			fmt.Printf("\n%s\n", styleSubTitle.Render("Checking required tools..."))
+			fmt.Printf("\n%s\n", styles.SubTitle.Render("Checking required tools..."))
 
 			tools := []string{"pgbench", "gnuplot"}
 			for _, tool := range tools {
-				fmt.Printf(styleInfo.Render("  %s ... "), tool)
+				fmt.Printf(styles.Info.Render("  %s ... "), tool)
 
 				if !isToolInPath(tool) {
-					fmt.Println(styleError.Render("✗ Not found"))
+					fmt.Println(styles.Error.Render("✗ Not found"))
 					continue
 				}
 
 				version, err := getToolVersion(tool)
 				if err != nil {
-					fmt.Printf("%s %s\n", styleError.Render("✗ Error:"), err)
+					fmt.Printf("%s %s\n", styles.Error.Render("✗ Error:"), err)
 					continue
 				}
 
-				fmt.Printf("%s (%s)\n", styleSuccess.Render("✓ Found"), styleInfo.Render(version))
+				fmt.Printf("%s (%s)\n", styles.Success.Render("✓ Found"), styles.Info.Render(version))
 			}
 
 			fmt.Println()

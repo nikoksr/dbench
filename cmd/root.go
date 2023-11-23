@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/pkg/buildinfo"
@@ -58,28 +57,6 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-var (
-	styleTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#f8f8f2")) // Light gray
-
-	styleSubTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#8be9fd")) // Cyan
-
-	styleSuccess = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#50fa7b"))
-
-	styleError = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#ff5555"))
-
-	styleInfo = lipgloss.NewStyle().
-			Italic(true).
-			Foreground(lipgloss.Color("#abb2bf")) // Lighter gray
-)
 
 func isToolInPath(tool string) bool {
 	_, err := exec.LookPath(tool)

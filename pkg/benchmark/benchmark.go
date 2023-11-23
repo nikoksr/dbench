@@ -16,6 +16,7 @@ import (
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/pkg/models"
 	"github.com/nikoksr/dbench/pkg/probing"
+	"github.com/nikoksr/dbench/pkg/styles"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.
@@ -214,7 +215,7 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 	}()
 
 	// Execute pgbench
-	fmt.Printf("==== Running: %s\n", cmd.String())
+	fmt.Printf("  %s\t", styles.Info.Render("Running command: "+cmd.String()))
 	eg.Go(func() error {
 		err := cmd.Run()
 		close(stopChan) // Stop system monitoring
@@ -223,8 +224,11 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 
 	// Wait for the group to finish
 	if err := eg.Wait(); err != nil {
+		fmt.Println(styles.Error.Render("✗ Failed"))
 		return nil, fmt.Errorf("%w: %s", err, stderr.String())
 	}
+
+	fmt.Println(styles.Success.Render("✓ Success"))
 
 	// Parse the pgbench output
 	output := stdout.String()
@@ -301,12 +305,15 @@ func Init(config *models.BenchmarkConfig) error {
 	cmd.Stderr = &stderr
 
 	// Execute the command
-	fmt.Printf("== Running command: %s\n", cmd.String())
+	fmt.Printf("  %s\t", styles.Info.Render("Running command: "+cmd.String()))
 
 	err := cmd.Run()
 	if err != nil {
+		fmt.Println(styles.Error.Render("✗ Failed\n"))
 		return fmt.Errorf("%w: %s", err, stderr.String())
 	}
+
+	fmt.Println(styles.Success.Render("✓ Success\n"))
 
 	return nil
 }

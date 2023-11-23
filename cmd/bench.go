@@ -19,6 +19,7 @@ import (
 	"github.com/nikoksr/dbench/pkg/database"
 	"github.com/nikoksr/dbench/pkg/export"
 	"github.com/nikoksr/dbench/pkg/models"
+	"github.com/nikoksr/dbench/pkg/styles"
 	"github.com/nikoksr/dbench/pkg/ui"
 )
 
@@ -52,28 +53,31 @@ func printBenchStarting(numSets int) {
 	// Calculate estimated runtime
 	estimatedRuntime := time.Duration(numSets) * time.Second * 5 // 5 seconds per set. Clean this up, works for now.
 
-	title := fmt.Sprintf("== Starting benchmarks! Estimated total runtime: %s", estimatedRuntime)
-
-	fmt.Printf("%s\n\n%s\n\n", ui.HorizontalSeparator(true), title)
+	fmt.Printf("%s\n%s: %s\n\n",
+		styles.Title.Render("Benchmark"),
+		styles.Text.Render("Starting benchmarks! Estimated total runtime"),
+		styles.Info.Render(estimatedRuntime.String()),
+	)
 }
 
 func printBenchComplete(groupID string) {
-	title := fmt.Sprintf("== Benchmarks complete! Run the following command to plot the results:\n\n\t%s plot %s", buildinfo.AppName, groupID)
-
-	fmt.Printf("\n%s\n\n%s\n\n", ui.HorizontalSeparator(true), title)
+	title := styles.Title.Render("Results")
+	benchCompleteMsg := styles.Text.Render("Benchmarks complete! Run the following command to plot the results")
+	plotCmd := styles.Info.Render(fmt.Sprintf("$ %s plot %s", buildinfo.AppName, groupID))
+	message := fmt.Sprintf("%s:\n\n  %s", benchCompleteMsg, plotCmd)
+	fmt.Printf("%s\n%s\n\n", title, message)
 }
 
 func getDBPassword() (string, bool, error) {
 	// Check if PGPASSWORD is set
 	passwd := os.Getenv("PGPASSWORD")
 
-	fmt.Println()
 	if passwd != "" {
-		fmt.Printf("== Detected PGPASSWORD - leave the following prompt empty to use it.\n\n")
+		fmt.Printf("%s\n\n", styles.Hint.Render("Detected PGPASSWORD - leave the following prompt empty to use it."))
 	}
 
 	// Prompt for password
-	prompt := ui.NewPrompt("== Enter database password:", "Password", true)
+	prompt := ui.NewPrompt("Enter database password:", "Password", true)
 	if err := prompt.Render(); err != nil {
 		return "", false, err
 	}
@@ -122,6 +126,8 @@ func newBenchRunCommand(benchConfig *models.BenchmarkConfig) *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("%s\n", styles.Title.Render("Authentication"))
+
 			// Open database connection
 			ctx := cmd.Context()
 			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
@@ -228,6 +234,8 @@ https://www.postgresql.org/docs/current/pgbench.html
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf("%s\n", styles.Title.Render("Authentication"))
+
 			// Prompt for password
 			password, canceled, err := getDBPassword()
 			if err != nil {
@@ -238,6 +246,9 @@ https://www.postgresql.org/docs/current/pgbench.html
 			}
 
 			benchConfig.Password = password
+
+			// Initialize database
+			fmt.Printf("%s\n", styles.Title.Render("Initialization"))
 
 			return benchmark.Init(benchConfig)
 		},
@@ -343,7 +354,7 @@ func newBenchExportCommand() *cobra.Command {
 		Use:                   "export [OPTIONS]",
 		Aliases:               []string{"e"},
 		GroupID:               "commands",
-		Short:                 "Export all benchmarks to a format of your choice",
+		Short:                 "Export all data to a format of your choice",
 		SilenceUsage:          true,
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
@@ -383,7 +394,7 @@ func newBenchExportCommand() *cobra.Command {
 				return fmt.Errorf("export benchmarks: %w", err)
 			}
 
-			fmt.Printf("\n== Exported benchmarks to %q\n\n", dataFile)
+			fmt.Printf("\nExported data to %s\n\n", styles.Success.Render(dataFile))
 
 			return nil
 		},

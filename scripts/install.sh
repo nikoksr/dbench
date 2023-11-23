@@ -409,7 +409,6 @@ install_file_linux() {
 	return "${rcode}"
 }
 
-
 #---  FUNCTION  ----------------------------------------------------------------
 #          NAME:  install_file_freebsd
 #   DESCRIPTION:  Installs a file into a location using 'install'.  If EUID not
@@ -422,30 +421,30 @@ install_file_linux() {
 #                 21 = Could not find sudo command
 #-------------------------------------------------------------------------------
 install_file_freebsd() {
-  local file
-  local prefix
-  local rcode
+	local file
+	local prefix
+	local rcode
 
-  file="${1}"
-  prefix="${2}"
+	file="${1}"
+	prefix="${2}"
 
-  if command -v install >/dev/null 2>&1; then
-    if [[ "${EUID}" == "0" ]]; then
-      install -C -b -B '_old' -m 755 "${file}" "${prefix}"
-      rcode="${?}"
-    else
-      if command -v sudo >/dev/null 2>&1; then
-        sudo install -C -b -B '_old' -m 755 "${file}" "${prefix}"
-        rcode="${?}"
-      else
-        rcode="21"
-      fi
-    fi
-  else
-    rcode="20"
-  fi
+	if command -v install >/dev/null 2>&1; then
+		if [[ "${EUID}" == "0" ]]; then
+			install -C -b -B '_old' -m 755 "${file}" "${prefix}"
+			rcode="${?}"
+		else
+			if command -v sudo >/dev/null 2>&1; then
+				sudo install -C -b -B '_old' -m 755 "${file}" "${prefix}"
+				rcode="${?}"
+			else
+				rcode="21"
+			fi
+		fi
+	else
+		rcode="20"
+	fi
 
-  return "${rcode}"
+	return "${rcode}"
 }
 
 #---  FUNCTION  ----------------------------------------------------------------
@@ -657,6 +656,7 @@ main() {
 		print_message "== Install prefix already exists. No need to create it." "info"
 	fi
 
+	[ ! -d "/etc/bash_completion.d/croc" ] && mkdir -p "/etc/bash_completion.d/croc"
 	case "${dbench_os}" in
 	"Linux")
 		install_file_linux "${tmpdir}/${dbench_bin_name}" "${prefix}/"

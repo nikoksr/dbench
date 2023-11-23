@@ -6,6 +6,7 @@ require (
 	entgo.io/ent v0.12.5
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
+	github.com/charmbracelet/lipgloss v0.9.1
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/spf13/cobra v1.8.0
 	github.com/xiaoqidun/entps v0.0.0-20231101165119-01cd6512a038
@@ -16,7 +17,6 @@ require (
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/lipgloss v0.9.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

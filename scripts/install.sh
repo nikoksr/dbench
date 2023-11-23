@@ -656,7 +656,7 @@ main() {
 		print_message "== Install prefix already exists. No need to create it." "info"
 	fi
 
-	[ ! -d "/etc/bash_completion.d/croc" ] && mkdir -p "/etc/bash_completion.d/croc"
+	[ ! -d "/etc/bash_completion.d/" ] && sudo mkdir -p "/etc/bash_completion.d/"
 	case "${dbench_os}" in
 	"Linux")
 		install_file_linux "${tmpdir}/${dbench_bin_name}" "${prefix}/"

@@ -47,10 +47,10 @@ func newDoctorCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 
-			fmt.Printf("\n%s\n", styles.Title.Render(fmt.Sprintf("%s %s", buildinfo.AppName, buildinfo.Version)))
+			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s %s", buildinfo.AppName, buildinfo.Version)))
 
 			// System information
-			fmt.Printf("\n%s\n", styles.SubTitle.Render("System Information"))
+			fmt.Printf("%s\n", styles.SubTitle.Render("System Information"))
 			fmt.Printf("  OS: %s\n", runtime.GOOS)
 			fmt.Printf("  Architecture: %s\n", runtime.GOARCH)
 

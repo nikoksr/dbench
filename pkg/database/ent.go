@@ -157,6 +157,32 @@ func (db *EntDatabase) FetchBenchmarksByGroupIDs(ctx context.Context, ids []stri
 	return db.FetchBenchmarks(ctx, options...)
 }
 
+func (db *EntDatabase) RemoveBenchmarksByIDs(ctx context.Context, ids []string) error {
+	// Convert string ids to pulid.ID
+	pulids, err := convertToPULID(ids)
+	if err != nil {
+		return err
+	}
+
+	// Delete benchmarks
+	_, err = db.client.Benchmark.Delete().
+		Where(benchmark.IDIn(pulids...)).Exec(ctx)
+	return err
+}
+
+func (db *EntDatabase) RemoveBenchmarksByGroupIDs(ctx context.Context, ids []string) error {
+	// Convert string ids to pulid.ID
+	pulids, err := convertToPULID(ids)
+	if err != nil {
+		return err
+	}
+
+	// Delete benchmarks
+	_, err = db.client.Benchmark.Delete().
+		Where(benchmark.GroupIDIn(pulids...)).Exec(ctx)
+	return err
+}
+
 func (db *EntDatabase) Close() error {
 	return db.client.Close()
 }

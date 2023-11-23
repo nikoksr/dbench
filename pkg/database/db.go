@@ -15,6 +15,8 @@ type Database interface {
 	FetchBenchmarks(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error)
 	FetchBenchmarksByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
 	FetchBenchmarksByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
+	RemoveBenchmarksByIDs(ctx context.Context, ids []string) error
+	RemoveBenchmarksByGroupIDs(ctx context.Context, ids []string) error
 	Close() error
 }
 

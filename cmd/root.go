@@ -40,6 +40,7 @@ func newRootCommand() *cobra.Command {
 		newBenchInitCommand(nil),
 		newBenchListCommand(),
 		newBenchExportCommand(),
+		newBenchRemoveCommand(),
 		newPlotCommand(),
 		newDoctorCommand(),
 	)

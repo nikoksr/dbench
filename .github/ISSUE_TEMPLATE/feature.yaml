@@ -38,10 +38,3 @@ body:
       options:
         - label: I agree to follow this project's Code of Conduct
           required: true
-  - type: textarea
-    id: ctx
-    attributes:
-      label: Additional context
-      description: Anything else you would like to add
-    validations:
-      required: false

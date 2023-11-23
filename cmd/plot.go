@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"

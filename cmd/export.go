@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/spf13/cobra"
+
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/styles"
-	"github.com/spf13/cobra"
-	"time"
 )
 
 func newExportCommand() *cobra.Command {

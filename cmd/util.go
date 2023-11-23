@@ -3,12 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/nikoksr/dbench/internal/styles"
-	"github.com/nikoksr/dbench/internal/ui"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/ui"
 )
 
 var (
@@ -98,6 +99,7 @@ func getDBPassword() (string, bool, error) {
 	// No password entered and PGPASSWORD is not set, return an error
 	return "", false, errNoPassword
 }
+
 func isToolInPath(tool string) bool {
 	_, err := exec.LookPath(tool)
 	return err == nil

@@ -2,6 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/spf13/cobra"
+	"go.jetpack.io/typeid"
+
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"github.com/nikoksr/dbench/internal/benchmark"
@@ -9,9 +14,6 @@ import (
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/styles"
-	"github.com/spf13/cobra"
-	"go.jetpack.io/typeid"
-	"time"
 )
 
 func printBenchStarting(numSets int) {

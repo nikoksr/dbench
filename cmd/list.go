@@ -1,13 +1,15 @@
 package cmd
 
 import (
-	"entgo.io/ent/dialect/sql"
 	"fmt"
+	"strings"
+
+	"entgo.io/ent/dialect/sql"
+	"github.com/spf13/cobra"
+
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/ui"
-	"github.com/spf13/cobra"
-	"strings"
 )
 
 func parseOrderBy(orderBy string) func(*sql.Selector) {

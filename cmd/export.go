@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/build"
-	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
-	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/store"
 )
 
 func newExportCommand() *cobra.Command {
@@ -33,14 +33,14 @@ func newExportCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
-			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
+			dbenchDB, err := store.New(ctx, dbenchDSN)
 			if err != nil {
 				return fmt.Errorf("create dbench database: %w", err)
 			}
 			defer dbenchDB.Close()
 
 			// Query benchmarks
-			benchmarks, err := dbenchDB.FetchBenchmarks(ctx)
+			benchmarks, err := dbenchDB.Fetch(ctx)
 			if err != nil {
 				return fmt.Errorf("fetch benchmarks: %w", err)
 			}

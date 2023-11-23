@@ -11,6 +11,7 @@ dev:
 	cp -f scripts/pre-commit.sh .git/hooks/pre-commit
 
 setup:
+	go generate ./...
 	go mod tidy
 
 build: ./**/*.go

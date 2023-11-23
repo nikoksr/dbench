@@ -55,6 +55,12 @@ func (BenchmarkMixin) Fields() []ent.Field {
 		field.Int("threads").
 			Optional().
 			Immutable(),
+		// The information about the system this benchmark was run on. Optional, as this feature is opt-in.
+		field.String("system_id").
+			GoType(pulid.ID("")).
+			Immutable().
+			Optional().
+			Nillable(),
 	}
 }
 
@@ -81,6 +87,12 @@ func (Benchmark) Edges() []ent.Edge {
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Comment("The metrics that we collected from the system during the benchmark run."),
+		edge.From("system", SystemDetails.Type).
+			Ref("benchmarks").
+			Field("system_id").
+			Unique().
+			Immutable().
+			Comment("The system this benchmark was run on."),
 	}
 }
 

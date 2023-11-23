@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 
 	"github.com/spf13/cobra"
 	"go.jetpack.io/typeid"
 
-	"github.com/nikoksr/dbench/internal/database"
-	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/store"
 )
 
 func newRemoveCommand() *cobra.Command {
@@ -24,7 +24,7 @@ func newRemoveCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
-			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
+			dbenchDB, err := store.New(ctx, dbenchDSN)
 			if err != nil {
 				return fmt.Errorf("create dbench database: %w", err)
 			}
@@ -59,7 +59,7 @@ func newRemoveCommand() *cobra.Command {
 				msg := fmt.Sprintf("Removing %d benchmark(s)", len(ids))
 				fmt.Printf("%s\t", styles.Text.Render(msg))
 
-				if err := dbenchDB.RemoveBenchmarksByIDs(ctx, ids); err != nil {
+				if err := dbenchDB.RemoveByIDs(ctx, ids); err != nil {
 					fmt.Println(styles.Error.Render("✗ Failed\n"))
 					return fmt.Errorf("remove benchmarks by ids: %w", err)
 				}
@@ -74,7 +74,7 @@ func newRemoveCommand() *cobra.Command {
 				msg := fmt.Sprintf("Removing %d benchmark-group(s)", len(groupIDs))
 				fmt.Printf("%s\t", styles.Text.Render(msg))
 
-				if err := dbenchDB.RemoveBenchmarksByGroupIDs(ctx, groupIDs); err != nil {
+				if err := dbenchDB.RemoveByGroupIDs(ctx, groupIDs); err != nil {
 					fmt.Println(styles.Error.Render("✗ Failed\n"))
 					return fmt.Errorf("remove benchmarks by group ids: %w", err)
 				}

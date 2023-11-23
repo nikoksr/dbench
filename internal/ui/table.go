@@ -4,6 +4,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/text"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -39,6 +40,7 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 	t.AppendHeader(table.Row{
 		"ID",
 		"Group ID",
+		"System ID",
 		"Comment",
 		"Clients",
 		"Threads",
@@ -52,6 +54,7 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 		t.AppendRow(table.Row{
 			benchmark.ID,
 			benchmark.GroupID,
+			text.ValueOrNA(benchmark.SystemID),
 			benchmark.Comment,
 			benchmark.Clients,
 			benchmark.Threads,

@@ -3,14 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/plot"
-	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/store"
 )
 
 func newPlotCommand() *cobra.Command {
@@ -85,13 +85,13 @@ func newPlotCommand() *cobra.Command {
 }
 
 func plotBenchmarks(ctx context.Context, id, outputDir string) error {
-	dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
+	dbenchDB, err := store.New(ctx, dbenchDSN)
 	if err != nil {
 		return fmt.Errorf("create dbench database: %w", err)
 	}
 	defer dbenchDB.Close()
 
-	benchmarks, err := dbenchDB.FetchBenchmarksByGroupIDs(ctx, []string{id})
+	benchmarks, err := dbenchDB.FetchByGroupIDs(ctx, []string{id})
 	if err != nil {
 		return fmt.Errorf("fetch benchmarks by benchmark-group ID: %w", err)
 	}

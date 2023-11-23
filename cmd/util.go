@@ -3,17 +3,19 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/nikoksr/dbench/internal/styles"
 	"github.com/nikoksr/dbench/internal/ui"
 )
 
 var (
-	errNoPassword = errors.New(`no password provided. You can either enter a password or set the PGPASSWORD environment variable:
+	errNoPassword = errors.New(`no password provided
+
+You can either enter a password or set the PGPASSWORD environment variable:
 
 	# Example
 	export PGPASSWORD=supersecret

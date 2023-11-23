@@ -11,6 +11,9 @@ type (
 	// BenchmarkResult represents the result of a benchmark run.
 	BenchmarkResult = ent.BenchmarkResult
 
+	// SystemDetails represents system details.
+	SystemDetails = ent.SystemDetails
+
 	// SystemMetric represents a system metric.
 	SystemMetric = ent.SystemMetric
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 	"os/exec"
 	"strconv"
@@ -15,8 +16,7 @@ import (
 
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/internal/models"
-	"github.com/nikoksr/dbench/internal/probing"
-	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/system"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.
@@ -194,7 +194,7 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 
 	// Start monitoring the system
 	eg.Go(func() error {
-		return probing.MonitorSystem(samplingRate, stopChan, systemSampleChan)
+		return system.CollectMetrics(samplingRate, stopChan, systemSampleChan)
 	})
 
 	// Handle system metrics

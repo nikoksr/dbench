@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/ent"
-	"github.com/nikoksr/dbench/internal/database"
+	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/ui"
 )
 
@@ -51,7 +51,7 @@ func newListCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Open database connection
 			ctx := cmd.Context()
-			dbenchDB, err := database.NewEntDatabase(ctx, dbenchDSN)
+			dbenchDB, err := store.New(ctx, dbenchDSN)
 			if err != nil {
 				return fmt.Errorf("create dbench database: %w", err)
 			}
@@ -67,7 +67,7 @@ func newListCommand() *cobra.Command {
 				return query
 			}
 
-			benchmarks, err := dbenchDB.FetchBenchmarks(ctx, database.WithOrderBy(orderByFunc))
+			benchmarks, err := dbenchDB.Fetch(ctx, store.WithOrderBy(orderByFunc))
 			if err != nil {
 				return fmt.Errorf("fetch benchmarks: %w", err)
 			}

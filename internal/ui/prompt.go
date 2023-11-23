@@ -2,12 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/nikoksr/dbench/internal/styles"
 )
 
 var _ Component = &Prompt{}

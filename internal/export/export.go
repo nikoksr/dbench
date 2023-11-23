@@ -9,6 +9,7 @@ import (
 
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 func createFile(name, extension string) (*os.File, error) {
@@ -42,6 +43,19 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) (string, error) {
 		"ScalingFactor",
 		"Clients",
 		"Threads",
+		// System details
+		"MachineID",
+		"OsName",
+		"OsArch",
+		"CPUVendor",
+		"CPUModel",
+		"CPUCount",
+		"CPUCores",
+		"CPUThreads",
+		"RAMPhysical",
+		"RAMUsable",
+		"DiskCount",
+		"DiskSpaceTotal",
 		// PGbench result
 		"Transactions",
 		"TransactionsPerSecond",
@@ -88,6 +102,19 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) (string, error) {
 			strconv.FormatFloat(benchmark.ScalingFactor, 'f', 2, 64),
 			strconv.Itoa(benchmark.Clients),
 			strconv.Itoa(benchmark.Threads),
+			// System details
+			text.ValueOrNA(benchmark.Edges.System.MachineID),
+			text.ValueOrNA(benchmark.Edges.System.OsName),
+			text.ValueOrNA(benchmark.Edges.System.OsArch),
+			text.ValueOrNA(benchmark.Edges.System.CPUVendor),
+			text.ValueOrNA(benchmark.Edges.System.CPUModel),
+			text.ValueOrNA(benchmark.Edges.System.CPUCount),
+			text.ValueOrNA(benchmark.Edges.System.CPUCores),
+			text.ValueOrNA(benchmark.Edges.System.CPUThreads),
+			text.ValueOrNA(benchmark.Edges.System.RAMPhysical),
+			text.ValueOrNA(benchmark.Edges.System.RAMUsable),
+			text.ValueOrNA(benchmark.Edges.System.DiskCount),
+			text.ValueOrNA(benchmark.Edges.System.DiskSpaceTotal),
 			// PGbench result
 			strconv.Itoa(benchmark.Edges.Result.Transactions),
 			strconv.FormatFloat(benchmark.Edges.Result.TransactionsPerSecond, 'f', 2, 64),

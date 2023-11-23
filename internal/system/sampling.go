@@ -1,4 +1,4 @@
-package probing
+package system
 
 import (
 	"fmt"
@@ -10,7 +10,8 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-func MonitorSystem(interval time.Duration, stopChan <-chan struct{}, sampleChan chan<- models.SystemSample) error {
+// CollectMetrics monitors the system and sends samples to the sample channel.
+func CollectMetrics(interval time.Duration, stopChan <-chan struct{}, sampleChan chan<- models.SystemSample) error {
 	for {
 		select {
 		case <-stopChan:
@@ -18,7 +19,7 @@ func MonitorSystem(interval time.Duration, stopChan <-chan struct{}, sampleChan 
 			return nil
 		case <-time.After(interval):
 			// Get system metrics
-			sample, err := getSystemMetrics()
+			sample, err := getMetrics()
 			if err != nil {
 				return fmt.Errorf("get system metrics: %w", err)
 			}
@@ -29,7 +30,7 @@ func MonitorSystem(interval time.Duration, stopChan <-chan struct{}, sampleChan 
 	}
 }
 
-func getSystemMetrics() (models.SystemSample, error) {
+func getMetrics() (models.SystemSample, error) {
 	cpuPercent, err := cpu.Percent(0, false)
 	if err != nil {
 		return models.SystemSample{}, fmt.Errorf("get cpu usage: %w", err)

@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nikoksr/dbench/internal/styles"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 var _ Component = &Prompt{}

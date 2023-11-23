@@ -1,4 +1,4 @@
-package database
+package store
 
 import (
 	"context"
@@ -9,26 +9,31 @@ import (
 
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/benchmark"
+	"github.com/nikoksr/dbench/ent/migrate"
+	"github.com/nikoksr/dbench/ent/systemdetails"
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-var _ Database = (*EntDatabase)(nil) // Ensure that EntDatabase implements the Database interface
+var _ benchmarkStore = (*entStore)(nil) // Ensure that entStore implements the Store interface
 
-type EntDatabase struct {
+type entStore struct {
 	client *ent.Client
 }
 
-func NewEntDatabase(ctx context.Context, dsn string) (*EntDatabase, error) {
+func newEntStore(ctx context.Context, dsn string) (*entStore, error) {
 	client, err := ent.Open(dialect.SQLite, dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := client.Schema.Create(ctx); err != nil {
+	if err := client.Schema.Create(ctx,
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
 		return nil, fmt.Errorf("create schema resources: %v", err)
 	}
 
-	return &EntDatabase{client: client}, nil
+	return &entStore{client: client}, nil
 }
 
 // rollback calls to tx.Rollback and wraps the given error
@@ -40,10 +45,10 @@ func rollback(tx *ent.Tx, err error) error {
 	return err
 }
 
-func (db *EntDatabase) SaveBenchmark(ctx context.Context, benchmark *models.Benchmark) error {
+func (db *entStore) Save(ctx context.Context, benchmark *models.Benchmark) (*models.Benchmark, error) {
 	tx, err := db.client.Tx(ctx)
 	if err != nil {
-		return fmt.Errorf("start transaction: %w", err)
+		return nil, fmt.Errorf("start transaction: %w", err)
 	}
 
 	_benchmark, err := tx.Benchmark.Create().
@@ -56,9 +61,10 @@ func (db *EntDatabase) SaveBenchmark(ctx context.Context, benchmark *models.Benc
 		SetQueryMode(benchmark.QueryMode).
 		SetClients(benchmark.Clients).
 		SetThreads(benchmark.Threads).
+		SetNillableSystemID(benchmark.SystemID).
 		Save(ctx)
 	if err != nil {
-		return rollback(tx, fmt.Errorf("save benchmark: %w", err))
+		return nil, rollback(tx, fmt.Errorf("save benchmark: %w", err))
 	}
 
 	_, err = tx.BenchmarkResult.Create().
@@ -71,7 +77,7 @@ func (db *EntDatabase) SaveBenchmark(ctx context.Context, benchmark *models.Benc
 		SetTotalRuntime(benchmark.Edges.Result.TotalRuntime).
 		Save(ctx)
 	if err != nil {
-		return rollback(tx, fmt.Errorf("save benchmark result: %w", err))
+		return nil, rollback(tx, fmt.Errorf("save benchmark result: %w", err))
 	}
 
 	_, err = tx.SystemMetric.Create().
@@ -97,13 +103,17 @@ func (db *EntDatabase) SaveBenchmark(ctx context.Context, benchmark *models.Benc
 		SetMemory99thLoad(benchmark.Edges.SystemMetric.Memory99thLoad).
 		Save(ctx)
 	if err != nil {
-		return rollback(tx, fmt.Errorf("save system metrics: %w", err))
+		return nil, rollback(tx, fmt.Errorf("save system metrics: %w", err))
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return benchmark, nil
 }
 
-func (db *EntDatabase) FetchBenchmarks(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
+func (db *entStore) Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
 	query, err := applyQueryOptions(db.client.Benchmark.Query(), options...)
 	if err != nil {
 		return nil, err
@@ -112,10 +122,11 @@ func (db *EntDatabase) FetchBenchmarks(ctx context.Context, options ...QueryOpti
 	return query.
 		WithResult().
 		WithSystemMetric().
+		WithSystem().
 		All(ctx)
 }
 
-func (db *EntDatabase) FetchBenchmarksByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+func (db *entStore) FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark ID provided")
@@ -133,10 +144,10 @@ func (db *EntDatabase) FetchBenchmarksByIDs(ctx context.Context, ids []string, o
 	}))
 
 	// Fetch benchmarks
-	return db.FetchBenchmarks(ctx, options...)
+	return db.Fetch(ctx, options...)
 }
 
-func (db *EntDatabase) FetchBenchmarksByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+func (db *entStore) FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark-group ID provided")
@@ -154,10 +165,10 @@ func (db *EntDatabase) FetchBenchmarksByGroupIDs(ctx context.Context, ids []stri
 	}))
 
 	// Fetch benchmarks
-	return db.FetchBenchmarks(ctx, options...)
+	return db.Fetch(ctx, options...)
 }
 
-func (db *EntDatabase) RemoveBenchmarksByIDs(ctx context.Context, ids []string) error {
+func (db *entStore) RemoveByIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -170,7 +181,7 @@ func (db *EntDatabase) RemoveBenchmarksByIDs(ctx context.Context, ids []string) 
 	return err
 }
 
-func (db *EntDatabase) RemoveBenchmarksByGroupIDs(ctx context.Context, ids []string) error {
+func (db *entStore) RemoveByGroupIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -183,6 +194,42 @@ func (db *EntDatabase) RemoveBenchmarksByGroupIDs(ctx context.Context, ids []str
 	return err
 }
 
-func (db *EntDatabase) Close() error {
+func (db *entStore) SaveSystemDetails(ctx context.Context, systemDetails *models.SystemDetails) (*models.SystemDetails, error) {
+	// Check if system details with machine ID already exists
+	if systemDetails.MachineID != nil {
+		_systemDetails, err := db.client.SystemDetails.Query().
+			Where(systemdetails.MachineIDEQ(*systemDetails.MachineID)).
+			Only(ctx)
+		if err == nil {
+			return _systemDetails, nil
+		}
+		if !ent.IsNotFound(err) {
+			return nil, fmt.Errorf("check if system details already exists: %w", err)
+		}
+	}
+
+	// No system details with machine ID found, create new
+	_systemDetails, err := db.client.SystemDetails.Create().
+		SetNillableMachineID(systemDetails.MachineID).
+		SetNillableOsName(systemDetails.OsName).
+		SetNillableOsArch(systemDetails.OsArch).
+		SetNillableCPUVendor(systemDetails.CPUVendor).
+		SetNillableCPUModel(systemDetails.CPUModel).
+		SetNillableCPUCount(systemDetails.CPUCount).
+		SetNillableCPUCores(systemDetails.CPUCores).
+		SetNillableCPUThreads(systemDetails.CPUThreads).
+		SetNillableRAMPhysical(systemDetails.RAMPhysical).
+		SetNillableRAMUsable(systemDetails.RAMUsable).
+		SetNillableDiskCount(systemDetails.DiskCount).
+		SetNillableDiskSpaceTotal(systemDetails.DiskSpaceTotal).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return _systemDetails, nil
+}
+
+func (db *entStore) Close() error {
 	return db.client.Close()
 }

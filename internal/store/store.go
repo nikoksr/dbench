@@ -1,5 +1,4 @@
-// Package database provides functionalities for connecting, transferring and retrieving data to a database
-package database
+package store
 
 import (
 	"context"
@@ -10,14 +9,30 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-type Database interface {
-	SaveBenchmark(ctx context.Context, res *models.Benchmark) error
-	FetchBenchmarks(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error)
-	FetchBenchmarksByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
-	FetchBenchmarksByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
-	RemoveBenchmarksByIDs(ctx context.Context, ids []string) error
-	RemoveBenchmarksByGroupIDs(ctx context.Context, ids []string) error
+type benchmarkStore interface {
+	Save(ctx context.Context, res *models.Benchmark) (*models.Benchmark, error)
+	Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error)
+	FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
+	FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
+	RemoveByIDs(ctx context.Context, ids []string) error
+	RemoveByGroupIDs(ctx context.Context, ids []string) error
+	SaveSystemDetails(ctx context.Context, res *models.SystemDetails) (*models.SystemDetails, error)
 	Close() error
+}
+
+type Store struct {
+	benchmarkStore
+}
+
+func New(ctx context.Context, dsn string) (*Store, error) {
+	db, err := newEntStore(ctx, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("create ent store: %w", err)
+	}
+
+	return &Store{
+		benchmarkStore: db,
+	}, nil
 }
 
 type FilterFunc func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery

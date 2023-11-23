@@ -2,37 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"os/exec"
-	"runtime"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"runtime"
 
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/styles"
 )
-
-func getToolVersion(tool string) (string, error) {
-	cmd := exec.Command(tool, "--version")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
-	}
-
-	// Remove all trailling spaces and newlines
-	version := string(out)
-	version = strings.Trim(version, "\n")
-	version = strings.TrimSpace(version)
-
-	if tool == "pgbench" {
-		version = strings.TrimPrefix(version, "pgbench (PostgreSQL) ")
-	} else if tool == "gnuplot" {
-		version = strings.TrimPrefix(version, "gnuplot ")
-	}
-
-	return version, nil
-}
 
 func newDoctorCommand() *cobra.Command {
 	cmd := &cobra.Command{

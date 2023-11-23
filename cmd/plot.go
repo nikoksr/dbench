@@ -3,45 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/spf13/cobra"
+	"os"
 
 	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/plot"
 	"github.com/nikoksr/dbench/internal/styles"
 )
-
-var gnuPlotNotInstalledErr = fmt.Errorf(`gnuplot is required to run the application. It can be installed with the following command:
-
-	# Arch
-	sudo pacman -S gnuplot
-
-	# Debian / Ubuntu
-	sudo apt install gnuplot
-
-	# macOS
-	brew install gnuplot
-
-For more information, see the official documentation:
-http://www.gnuplot.info/
-`)
-
-func prepareDirectory(dir string) error {
-	// Clean directory path
-	dir = filepath.Clean(dir)
-
-	// Create output directory if it doesn't exist
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return fmt.Errorf("create output directory: %w", err)
-		}
-	}
-
-	return nil
-}
 
 func newPlotCommand() *cobra.Command {
 	var (

@@ -62,10 +62,10 @@ https://www.postgresql.org/docs/current/pgbench.html
 	}
 
 	// Database flags
-	cmd.Flags().StringVarP(&benchConfig.DBName, "dbname", "d", "postgres", "Name of the database")
-	cmd.Flags().StringVarP(&benchConfig.Username, "username", "U", "postgres", "Username for connecting to the database")
-	cmd.Flags().StringVarP(&benchConfig.Host, "host", "H", "localhost", "Host of the database")
-	cmd.Flags().StringVarP(&benchConfig.Port, "port", "p", "5432", "Port of the database")
+	cmd.Flags().StringVarP(&benchConfig.DBName, "db-name", "d", "postgres", "Name of the database")
+	cmd.Flags().StringVarP(&benchConfig.Username, "db-user", "U", "postgres", "Username for connecting to the database")
+	cmd.Flags().StringVarP(&benchConfig.Host, "db-host", "H", "localhost", "Host of the database")
+	cmd.Flags().StringVarP(&benchConfig.Port, "db-port", "p", "5432", "Port of the database")
 
 	// Init flags
 	cmd.Flags().IntVar(&benchConfig.FillFactor, "fill", 100, "Fill factor for the database (10-100)")

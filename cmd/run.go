@@ -171,10 +171,10 @@ options listed below.`,
 	}
 
 	// Store flags
-	cmd.Flags().StringVarP(&benchConfig.DBName, "dbname", "d", "postgres", "Name of the database")
-	cmd.Flags().StringVarP(&benchConfig.Username, "username", "U", "postgres", "Username for connecting to the database")
-	cmd.Flags().StringVarP(&benchConfig.Host, "host", "H", "localhost", "Host of the database")
-	cmd.Flags().StringVarP(&benchConfig.Port, "port", "p", "5432", "Port of the database")
+	cmd.Flags().StringVarP(&benchConfig.DBName, "db-name", "d", "postgres", "Name of the database")
+	cmd.Flags().StringVarP(&benchConfig.Username, "db-user", "U", "postgres", "Username for connecting to the database")
+	cmd.Flags().StringVarP(&benchConfig.Host, "db-host", "H", "localhost", "Host of the database")
+	cmd.Flags().StringVarP(&benchConfig.Port, "db-port", "p", "5432", "Port of the database")
 
 	// Benchmark flags
 	cmd.Flags().StringVar(&benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")

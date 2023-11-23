@@ -4,12 +4,12 @@ package export
 import (
 	"encoding/csv"
 	"encoding/json"
-	"github.com/nikoksr/dbench/internal/ui/text"
 	"os"
 	"strconv"
 
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 func createFile(name, extension string) (*os.File, error) {

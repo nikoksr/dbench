@@ -4,12 +4,12 @@ package ui
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/text"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 
 	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 //

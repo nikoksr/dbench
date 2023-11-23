@@ -3,13 +3,13 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/nikoksr/dbench/internal/ui"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 var (

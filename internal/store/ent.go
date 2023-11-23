@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/ent/systemdetails"
 
 	"entgo.io/ent/dialect"
 	_ "github.com/xiaoqidun/entps" // Modernc wrapper for ent
@@ -11,6 +10,7 @@ import (
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/benchmark"
 	"github.com/nikoksr/dbench/ent/migrate"
+	"github.com/nikoksr/dbench/ent/systemdetails"
 	"github.com/nikoksr/dbench/internal/models"
 )
 

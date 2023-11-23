@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -15,6 +14,7 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/system"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 func printBenchStarting(numSets int) {

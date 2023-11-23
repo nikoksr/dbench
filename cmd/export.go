@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -10,6 +9,7 @@ import (
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/store"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 func newExportCommand() *cobra.Command {

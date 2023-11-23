@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
-	"github.com/nikoksr/dbench/internal/ui/text"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/system"
+	"github.com/nikoksr/dbench/internal/ui/styles"
+	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 func newDoctorCommand() *cobra.Command {

@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,6 +10,7 @@ import (
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/plot"
 	"github.com/nikoksr/dbench/internal/store"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 func newPlotCommand() *cobra.Command {

@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/benchmark"
 	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 func newInitCommand() *cobra.Command {

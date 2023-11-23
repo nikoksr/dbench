@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 
 	"github.com/spf13/cobra"
 	"go.jetpack.io/typeid"
 
 	"github.com/nikoksr/dbench/internal/store"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 func newRemoveCommand() *cobra.Command {

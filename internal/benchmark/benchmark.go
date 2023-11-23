@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 	"os"
 	"os/exec"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/system"
+	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.

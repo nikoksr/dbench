@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/nikoksr/dbench/ent/migrate"
 
 	"entgo.io/ent/dialect"
 	_ "github.com/xiaoqidun/entps" // Modernc wrapper for ent
@@ -24,7 +25,10 @@ func NewEntDatabase(ctx context.Context, dsn string) (*EntDatabase, error) {
 		return nil, err
 	}
 
-	if err := client.Schema.Create(ctx); err != nil {
+	if err := client.Schema.Create(ctx,
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
 		return nil, fmt.Errorf("create schema resources: %v", err)
 	}
 

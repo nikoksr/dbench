@@ -485,7 +485,7 @@ main() {
 	local autocomplete_install_rcode
 
 	dbench_bin_name="dbench"
-	dbench_version="0.10.0-alpha"
+	dbench_version="0.10.1-alpha"
 	dbench_dl_ext="tar.gz"
 	dbench_base_url="https://github.com/nikoksr/dbench/releases/download"
 	prefix="${1}"

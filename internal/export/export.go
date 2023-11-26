@@ -89,59 +89,69 @@ func ToCSV(benchmarks []*models.Benchmark, filename string) (string, error) {
 	}
 
 	// Write data rows
+	// Write data rows
 	for _, benchmark := range benchmarks {
+		// Create a copy of the benchmark
+		benchmarkCopy := *benchmark
+
+		// If System is nil, initialize it with its zero value
+		if benchmarkCopy.Edges.System == nil {
+			benchmarkCopy.Edges.System = &models.SystemDetails{}
+		}
+
+		// Now use benchmarkCopy instead of benchmark
 		record := []string{
 			// Config
-			benchmark.ID.String(),
-			benchmark.GroupID.String(),
-			benchmark.Comment,
-			benchmark.Version,
-			benchmark.Command,
-			benchmark.TransactionType,
-			benchmark.QueryMode,
-			strconv.FormatFloat(benchmark.ScalingFactor, 'f', 2, 64),
-			strconv.Itoa(benchmark.Clients),
-			strconv.Itoa(benchmark.Threads),
+			benchmarkCopy.ID.String(),
+			benchmarkCopy.GroupID.String(),
+			benchmarkCopy.Comment,
+			benchmarkCopy.Version,
+			benchmarkCopy.Command,
+			benchmarkCopy.TransactionType,
+			benchmarkCopy.QueryMode,
+			strconv.FormatFloat(benchmarkCopy.ScalingFactor, 'f', 2, 64),
+			strconv.Itoa(benchmarkCopy.Clients),
+			strconv.Itoa(benchmarkCopy.Threads),
 			// System details
-			text.ValueOrNA(benchmark.Edges.System.MachineID),
-			text.ValueOrNA(benchmark.Edges.System.OsName),
-			text.ValueOrNA(benchmark.Edges.System.OsArch),
-			text.ValueOrNA(benchmark.Edges.System.CPUVendor),
-			text.ValueOrNA(benchmark.Edges.System.CPUModel),
-			text.ValueOrNA(benchmark.Edges.System.CPUCount),
-			text.ValueOrNA(benchmark.Edges.System.CPUCores),
-			text.ValueOrNA(benchmark.Edges.System.CPUThreads),
-			text.ValueOrNA(benchmark.Edges.System.RAMPhysical),
-			text.ValueOrNA(benchmark.Edges.System.RAMUsable),
-			text.ValueOrNA(benchmark.Edges.System.DiskCount),
-			text.ValueOrNA(benchmark.Edges.System.DiskSpaceTotal),
+			text.ValueOrNA(benchmarkCopy.Edges.System.MachineID),
+			text.ValueOrNA(benchmarkCopy.Edges.System.OsName),
+			text.ValueOrNA(benchmarkCopy.Edges.System.OsArch),
+			text.ValueOrNA(benchmarkCopy.Edges.System.CPUVendor),
+			text.ValueOrNA(benchmarkCopy.Edges.System.CPUModel),
+			text.ValueOrNA(benchmarkCopy.Edges.System.CPUCount),
+			text.ValueOrNA(benchmarkCopy.Edges.System.CPUCores),
+			text.ValueOrNA(benchmarkCopy.Edges.System.CPUThreads),
+			text.ValueOrNA(benchmarkCopy.Edges.System.RAMPhysical),
+			text.ValueOrNA(benchmarkCopy.Edges.System.RAMUsable),
+			text.ValueOrNA(benchmarkCopy.Edges.System.DiskCount),
+			text.ValueOrNA(benchmarkCopy.Edges.System.DiskSpaceTotal),
 			// PGbench result
-			strconv.Itoa(benchmark.Edges.Result.Transactions),
-			strconv.FormatFloat(benchmark.Edges.Result.TransactionsPerSecond, 'f', 2, 64),
-			strconv.Itoa(benchmark.Edges.Result.FailedTransactions),
-			benchmark.Edges.Result.AverageLatency.String(),
-			benchmark.Edges.Result.ConnectionTime.String(),
-			benchmark.Edges.Result.TotalRuntime.String(),
+			strconv.Itoa(benchmarkCopy.Edges.Result.Transactions),
+			strconv.FormatFloat(benchmarkCopy.Edges.Result.TransactionsPerSecond, 'f', 2, 64),
+			strconv.Itoa(benchmarkCopy.Edges.Result.FailedTransactions),
+			benchmarkCopy.Edges.Result.AverageLatency.String(),
+			benchmarkCopy.Edges.Result.ConnectionTime.String(),
+			benchmarkCopy.Edges.Result.TotalRuntime.String(),
 			// CPU
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMinLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUMaxLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPUAverageLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU50thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU75thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU90thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU95thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.CPU99thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPUMinLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPUMaxLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPUAverageLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPU50thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPU75thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPU90thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPU95thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.CPU99thLoad, 'f', 2, 64),
 			// Memory
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMinLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryMaxLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.MemoryAverageLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory50thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory75thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory90thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory95thLoad, 'f', 2, 64),
-			strconv.FormatFloat(benchmark.Edges.SystemMetric.Memory99thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.MemoryMinLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.MemoryMaxLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.MemoryAverageLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.Memory50thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.Memory75thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.Memory90thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.Memory95thLoad, 'f', 2, 64),
+			strconv.FormatFloat(benchmarkCopy.Edges.SystemMetric.Memory99thLoad, 'f', 2, 64),
 			// Misc
-			benchmark.CreatedAt.Local().Format("2006-01-02 15:04:05"),
+			benchmarkCopy.CreatedAt.Local().Format("2006-01-02 15:04:05"),
 		}
 		if err := writer.Write(record); err != nil {
 			return "", err

@@ -30,7 +30,7 @@ Enabling the --system flag, dbench will show you the exact system details that w
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 
-			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s %s", build.AppName, build.Version)))
+			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s v%s", build.AppName, build.Version)))
 
 			// Check dbench database
 			fmt.Printf("%s\n", styles.SubTitle.Render("Checking dbench database..."))

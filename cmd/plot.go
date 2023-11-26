@@ -29,7 +29,7 @@ func newPlotCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if gnuplot is installed
 			if !isToolInPath("gnuplot") {
 				return gnuPlotNotInstalledErr

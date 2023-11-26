@@ -32,7 +32,7 @@ https://www.postgresql.org/docs/current/pgbench.html
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check if pgbench is installed
 			if !isToolInPath("pgbench") {
 				return errPgbenchNotInstalled

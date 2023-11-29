@@ -6,14 +6,21 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/build"
-	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/system"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
-func newDoctorCommand() *cobra.Command {
-	var showSystemDetails bool
+type doctorOptions struct {
+	*globalOptions
+
+	showSystemDetails bool
+}
+
+func newDoctorCommand(globalsOpts *globalOptions) *cobra.Command {
+	opts := &doctorOptions{
+		globalOptions: globalsOpts,
+	}
 
 	cmd := &cobra.Command{
 		Use:     "doctor",
@@ -28,23 +35,11 @@ Enabling the --system flag, dbench will show you the exact system details that w
 		Args:                  cobra.NoArgs,
 		ValidArgsFunction:     cobra.NoFileCompletions,
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-
 			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s v%s", build.AppName, build.Version)))
 
 			// Check dbench database
 			fmt.Printf("%s\n", styles.SubTitle.Render("Checking dbench database..."))
 			fmt.Print(styles.Info.Render("  Connecting ... "))
-
-			dbenchDB, err := store.New(ctx, dbenchDSN)
-			_ = dbenchDB.Close()
-
-			if err != nil {
-				fmt.Printf("%s %s\n", styles.Error.Render("✗ Error:"), err)
-				return
-			} else {
-				fmt.Println(styles.Success.Render("✓ Success"))
-			}
 
 			// Check required tools
 			fmt.Printf("\n%s\n", styles.SubTitle.Render("Checking required tools..."))
@@ -70,7 +65,7 @@ Enabling the --system flag, dbench will show you the exact system details that w
 			fmt.Println()
 
 			// System information
-			if !showSystemDetails {
+			if !opts.showSystemDetails {
 				return // Skip system details
 			}
 
@@ -108,7 +103,7 @@ Enabling the --system flag, dbench will show you the exact system details that w
 		},
 	}
 
-	cmd.Flags().BoolVarP(&showSystemDetails, "sysinfo", "s", false, "Show detailed system information")
+	cmd.Flags().BoolVarP(&opts.showSystemDetails, "sysinfo", "s", false, "Show detailed system information")
 
 	return cmd
 }

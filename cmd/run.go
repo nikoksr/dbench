@@ -7,12 +7,13 @@ import (
 	"github.com/spf13/cobra"
 	"go.jetpack.io/typeid"
 
+	"github.com/nikoksr/dbench/cmd/cobrax"
 	"github.com/nikoksr/dbench/ent/schema/duration"
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"github.com/nikoksr/dbench/internal/benchmark"
 	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/models"
-	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/system"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
@@ -36,10 +37,20 @@ func printBenchComplete(groupID string) {
 	fmt.Printf("%s\n%s\n\n", title, message)
 }
 
-func newRunCommand() *cobra.Command {
-	var clients []int
-	var collectSystemDetails bool
-	benchConfig := new(models.BenchmarkConfig)
+type runOptions struct {
+	*globalOptions
+
+	benchConfig          models.BenchmarkConfig
+	clients              []int
+	collectSystemDetails bool
+}
+
+func newRunCommand(globalOpts *globalOptions) *cobra.Command {
+	opts := &runOptions{
+		globalOptions: globalOpts,
+	}
+
+	db := new(database.Database)
 
 	cmd := &cobra.Command{
 		Use:     "run [OPTIONS]",
@@ -68,24 +79,12 @@ options listed below.`,
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check if pgbench is installed
-			if !isToolInPath("pgbench") {
-				return errPgbenchNotInstalled
-			}
-
-			return nil
-		},
+		PreRunE: cobrax.HooksE(
+			pgbenchInstalledHook(),
+			prepareDBHook(db, globalOpts.dataDir),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s\n", styles.Title.Render("Authentication"))
-
-			// Open database connection
-			ctx := cmd.Context()
-			dbenchDB, err := store.New(ctx, dbenchDSN)
-			if err != nil {
-				return fmt.Errorf("create dbench database: %w", err)
-			}
-			defer dbenchDB.Close()
 
 			// Prompt for password
 			password, canceled, err := getDBPassword()
@@ -96,7 +95,7 @@ options listed below.`,
 				return nil
 			}
 
-			benchConfig.Password = password
+			opts.benchConfig.Password = password
 
 			// Generate a new benchmark group id. This is mostly helpful for the analysis of the benchmarks.
 			benchmarkGroupID, err := typeid.WithPrefix("bmkgrp")
@@ -106,7 +105,9 @@ options listed below.`,
 
 			// Collect system details if opted-in
 			var systemID *pulid.ID
-			if collectSystemDetails {
+			ctx := cmd.Context()
+
+			if opts.collectSystemDetails {
 				fmt.Printf("%s\n", styles.Title.Render("System details"))
 				fmt.Printf("%s\n\n", styles.Hint.Render("You've opted in to collect system information for benchmark analysis. To view a preview of the system data we'll collect, run 'dbench doctor --sysinfo'."))
 
@@ -127,7 +128,7 @@ options listed below.`,
 				}
 
 				// Save system details to database
-				systemDetails, err := dbenchDB.SaveSystemDetails(ctx, systemDetails)
+				systemDetails, err := db.SaveSystemDetails(ctx, systemDetails)
 				if err != nil {
 					return fmt.Errorf("save system details: %w", err)
 				}
@@ -136,15 +137,15 @@ options listed below.`,
 			}
 
 			// Run benchmark for different client counts
-			printBenchStarting(len(clients))
+			printBenchStarting(len(opts.clients))
 
-			for _, numClients := range clients {
+			for _, numClients := range opts.clients {
 				// Create benchmark configuration
-				benchConfig.NumClients = numClients
+				opts.benchConfig.NumClients = numClients
 
 				// Run benchmark
 				benchStart := time.Now()
-				bench, err := benchmark.Run(ctx, benchConfig)
+				bench, err := benchmark.Run(ctx, &opts.benchConfig)
 				benchRuntime := time.Since(benchStart)
 
 				if err != nil {
@@ -157,7 +158,7 @@ options listed below.`,
 				bench.SystemID = systemID
 
 				// Save benchmark to database
-				bench, err = dbenchDB.Save(ctx, bench)
+				_, err = db.Save(ctx, bench)
 				if err != nil {
 					return fmt.Errorf("save benchmark: %w", err)
 				}
@@ -168,20 +169,21 @@ options listed below.`,
 
 			return nil
 		},
+		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	// Store flags
-	cmd.Flags().StringVarP(&benchConfig.DBName, "db-name", "d", "postgres", "Name of the database")
-	cmd.Flags().StringVarP(&benchConfig.Username, "db-user", "U", "postgres", "Username for connecting to the database")
-	cmd.Flags().StringVarP(&benchConfig.Host, "db-host", "H", "localhost", "Host of the database")
-	cmd.Flags().StringVarP(&benchConfig.Port, "db-port", "p", "5432", "Port of the database")
+	cmd.Flags().StringVarP(&opts.benchConfig.DBName, "db-name", "d", "postgres", "Name of the database")
+	cmd.Flags().StringVarP(&opts.benchConfig.Username, "db-user", "U", "postgres", "Username for connecting to the database")
+	cmd.Flags().StringVarP(&opts.benchConfig.Host, "db-host", "H", "localhost", "Host of the database")
+	cmd.Flags().StringVarP(&opts.benchConfig.Port, "db-port", "p", "5432", "Port of the database")
 
 	// Benchmark flags
-	cmd.Flags().StringVar(&benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")
-	cmd.Flags().IntSliceVar(&clients, "clients", []int{1, 2, 4, 8, 16, 32, 64, 128, 256}, "List of number of clients to benchmark with")
-	cmd.Flags().IntVar(&benchConfig.NumThreads, "threads", 1, "Number of threads to use")
-	cmd.Flags().StringVarP(&benchConfig.Comment, "comment", "c", "", "Comment to add some optional information to the benchmark")
-	cmd.Flags().BoolVar(&collectSystemDetails, "collect-sysinfo", false, "Opt-in to collect detailed system specifications (CPU, RAM, etc.) for benchmark analysis. See help for more")
+	cmd.Flags().StringVar(&opts.benchConfig.Mode, "mode", models.ModeSimple, "Benchmarking mode (simple, thorough)")
+	cmd.Flags().StringVarP(&opts.benchConfig.Comment, "comment", "c", "", "Comment to add some optional information to the benchmark")
+	cmd.Flags().IntVar(&opts.benchConfig.NumThreads, "threads", 1, "Number of threads to use")
+	cmd.Flags().IntSliceVar(&opts.clients, "clients", []int{1, 2, 4, 8, 16, 32, 64, 128, 256}, "List of number of clients to benchmark with")
+	cmd.Flags().BoolVar(&opts.collectSystemDetails, "collect-sysinfo", false, "Opt-in to collect detailed system specifications (CPU, RAM, etc.) for benchmark analysis. See help for more")
 
 	return cmd
 }

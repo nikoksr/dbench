@@ -39,7 +39,7 @@ versions using the `dbench doctor` command.
 > PGPASSWORD environment variable, or input your password when prompted. dbench will subsequently use the PGPASSWORD
 > environment variable in its sub-processes.
 
-To use `dbench`, you first need to initialize a PostgreSQL database. Remember to adjust the connection parameters to
+To use `dbench`, you first need to initialize a PostgreSQL Database. Remember to adjust the connection parameters to
 your needs.
 
 ```bash

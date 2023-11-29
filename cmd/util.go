@@ -21,8 +21,7 @@ You can either enter a password or set the PGPASSWORD environment variable:
 	export PGPASSWORD=supersecret
 
 For more information, see the official documentation:
-https://www.postgresql.org/docs/current/libpq-envars.html
-`)
+https://www.postgresql.org/docs/current/libpq-envars.html`)
 
 	errPgbenchNotInstalled = errors.New(`pgbench is required to run the application. It can be installed with the following command:
 
@@ -36,10 +35,9 @@ https://www.postgresql.org/docs/current/libpq-envars.html
 	brew install postgresql
 
 For more information, see the official documentation:
-https://www.postgresql.org/docs/current/pgbench.html
-`)
+https://www.postgresql.org/docs/current/pgbench.html`)
 
-	gnuPlotNotInstalledErr = fmt.Errorf(`gnuplot is required to run the application. It can be installed with the following command:
+	errGNUPlotNotInstalled = fmt.Errorf(`gnuplot is required to run the application. It can be installed with the following command:
 
 	# Arch
 	sudo pacman -S gnuplot
@@ -51,8 +49,7 @@ https://www.postgresql.org/docs/current/pgbench.html
 	brew install gnuplot
 
 For more information, see the official documentation:
-http://www.gnuplot.info/
-`)
+http://www.gnuplot.info/`)
 )
 
 func prepareDirectory(dir string) error {

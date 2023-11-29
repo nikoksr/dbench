@@ -6,11 +6,22 @@ import (
 	"github.com/spf13/cobra"
 	"go.jetpack.io/typeid"
 
-	"github.com/nikoksr/dbench/internal/store"
+	"github.com/nikoksr/dbench/cmd/cobrax"
+	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
-func newRemoveCommand() *cobra.Command {
+type removeOptions struct {
+	*globalOptions
+}
+
+func newRemoveCommand(globalOpts *globalOptions) *cobra.Command {
+	opts := &removeOptions{
+		globalOptions: globalOpts,
+	}
+
+	db := new(database.Database)
+
 	cmd := &cobra.Command{
 		Use:                   "remove ID [ID...]",
 		Aliases:               []string{"r", "rm"},
@@ -21,15 +32,8 @@ func newRemoveCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
 		ValidArgsFunction:     cobra.NoFileCompletions,
+		PreRunE:               cobrax.HooksE(prepareDBHook(db, opts.dataDir)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Open database connection
-			ctx := cmd.Context()
-			dbenchDB, err := store.New(ctx, dbenchDSN)
-			if err != nil {
-				return fmt.Errorf("create dbench database: %w", err)
-			}
-			defer dbenchDB.Close()
-
 			// Convert and validate ids
 			fmt.Printf("%s\n", styles.Title.Render("Validation"))
 			fmt.Printf("%s\t", styles.Text.Render("Validating ids..."))
@@ -53,13 +57,14 @@ func newRemoveCommand() *cobra.Command {
 			fmt.Println(styles.Success.Render("✓ Success"))
 
 			// Remove benchmarks
+			ctx := cmd.Context()
 
 			if len(ids) > 0 {
 				fmt.Printf("%s\n", styles.Title.Render("Remove benchmarks"))
 				msg := fmt.Sprintf("Removing %d benchmark(s)", len(ids))
 				fmt.Printf("%s\t", styles.Text.Render(msg))
 
-				if err := dbenchDB.RemoveByIDs(ctx, ids); err != nil {
+				if err := db.RemoveByIDs(ctx, ids); err != nil {
 					fmt.Println(styles.Error.Render("✗ Failed\n"))
 					return fmt.Errorf("remove benchmarks by ids: %w", err)
 				}
@@ -74,7 +79,7 @@ func newRemoveCommand() *cobra.Command {
 				msg := fmt.Sprintf("Removing %d benchmark-group(s)", len(groupIDs))
 				fmt.Printf("%s\t", styles.Text.Render(msg))
 
-				if err := dbenchDB.RemoveByGroupIDs(ctx, groupIDs); err != nil {
+				if err := db.RemoveByGroupIDs(ctx, groupIDs); err != nil {
 					fmt.Println(styles.Error.Render("✗ Failed\n"))
 					return fmt.Errorf("remove benchmarks by group ids: %w", err)
 				}
@@ -86,6 +91,7 @@ func newRemoveCommand() *cobra.Command {
 
 			return nil
 		},
+		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	return cmd

@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-type benchmarkStore interface {
+type BenchmarkRepo interface {
 	Save(ctx context.Context, res *models.Benchmark) (*models.Benchmark, error)
 	Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error)
 	FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*models.Benchmark, error)
@@ -18,21 +18,6 @@ type benchmarkStore interface {
 	RemoveByGroupIDs(ctx context.Context, ids []string) error
 	SaveSystemDetails(ctx context.Context, res *models.SystemDetails) (*models.SystemDetails, error)
 	Close() error
-}
-
-type Store struct {
-	benchmarkStore
-}
-
-func New(ctx context.Context, dsn string) (*Store, error) {
-	db, err := newEntStore(ctx, dsn)
-	if err != nil {
-		return nil, fmt.Errorf("create ent store: %w", err)
-	}
-
-	return &Store{
-		benchmarkStore: db,
-	}, nil
 }
 
 type FilterFunc func(query *ent.BenchmarkQuery) *ent.BenchmarkQuery
@@ -71,7 +56,7 @@ func WithOffset(offset int) QueryOption {
 	}
 }
 
-func applyQueryOptions(query *ent.BenchmarkQuery, opts ...QueryOption) (*ent.BenchmarkQuery, error) {
+func applyQueryOptions(query *ent.BenchmarkQuery, opts ...QueryOption) *ent.BenchmarkQuery {
 	qo := &QueryOptions{} // Initialize with default options
 	for _, opt := range opts {
 		opt(qo) // Apply each option to the options
@@ -93,7 +78,7 @@ func applyQueryOptions(query *ent.BenchmarkQuery, opts ...QueryOption) (*ent.Ben
 		query = filter(query)
 	}
 
-	return query, nil
+	return query
 }
 
 func convertToPULID(ids []string) ([]pulid.ID, error) {

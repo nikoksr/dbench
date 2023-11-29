@@ -1,4 +1,4 @@
-package store
+package database
 
 import (
 	"context"
@@ -14,13 +14,13 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-var _ benchmarkStore = (*entStore)(nil) // Ensure that entStore implements the Store interface
+var _ BenchmarkRepo = (*Database)(nil)
 
-type entStore struct {
+type Database struct {
 	client *ent.Client
 }
 
-func newEntStore(ctx context.Context, dsn string) (*entStore, error) {
+func New(ctx context.Context, dsn string) (*Database, error) {
 	client, err := ent.Open(dialect.SQLite, dsn)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,15 @@ func newEntStore(ctx context.Context, dsn string) (*entStore, error) {
 		return nil, fmt.Errorf("create schema resources: %v", err)
 	}
 
-	return &entStore{client: client}, nil
+	return &Database{client: client}, nil
+}
+
+func (db *Database) IsReady() error {
+	if db.client == nil {
+		return fmt.Errorf("database client is nil")
+	}
+
+	return nil
 }
 
 // rollback calls to tx.Rollback and wraps the given error
@@ -45,7 +53,7 @@ func rollback(tx *ent.Tx, err error) error {
 	return err
 }
 
-func (db *entStore) Save(ctx context.Context, benchmark *models.Benchmark) (*models.Benchmark, error) {
+func (db *Database) Save(ctx context.Context, benchmark *models.Benchmark) (*models.Benchmark, error) {
 	tx, err := db.client.Tx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("start transaction: %w", err)
@@ -113,11 +121,8 @@ func (db *entStore) Save(ctx context.Context, benchmark *models.Benchmark) (*mod
 	return benchmark, nil
 }
 
-func (db *entStore) Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
-	query, err := applyQueryOptions(db.client.Benchmark.Query(), options...)
-	if err != nil {
-		return nil, err
-	}
+func (db *Database) Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
+	query := applyQueryOptions(db.client.Benchmark.Query(), options...)
 
 	return query.
 		WithResult().
@@ -126,7 +131,7 @@ func (db *entStore) Fetch(ctx context.Context, options ...QueryOption) ([]*model
 		All(ctx)
 }
 
-func (db *entStore) FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+func (db *Database) FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark ID provided")
@@ -147,7 +152,7 @@ func (db *entStore) FetchByIDs(ctx context.Context, ids []string, options ...Que
 	return db.Fetch(ctx, options...)
 }
 
-func (db *entStore) FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+func (db *Database) FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark-group ID provided")
@@ -168,7 +173,7 @@ func (db *entStore) FetchByGroupIDs(ctx context.Context, ids []string, options .
 	return db.Fetch(ctx, options...)
 }
 
-func (db *entStore) RemoveByIDs(ctx context.Context, ids []string) error {
+func (db *Database) RemoveByIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -181,7 +186,7 @@ func (db *entStore) RemoveByIDs(ctx context.Context, ids []string) error {
 	return err
 }
 
-func (db *entStore) RemoveByGroupIDs(ctx context.Context, ids []string) error {
+func (db *Database) RemoveByGroupIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -194,7 +199,7 @@ func (db *entStore) RemoveByGroupIDs(ctx context.Context, ids []string) error {
 	return err
 }
 
-func (db *entStore) SaveSystemDetails(ctx context.Context, systemDetails *models.SystemDetails) (*models.SystemDetails, error) {
+func (db *Database) SaveSystemDetails(ctx context.Context, systemDetails *models.SystemDetails) (*models.SystemDetails, error) {
 	// Check if system details with machine ID already exists
 	if systemDetails.MachineID != nil {
 		_systemDetails, err := db.client.SystemDetails.Query().
@@ -230,6 +235,6 @@ func (db *entStore) SaveSystemDetails(ctx context.Context, systemDetails *models
 	return _systemDetails, nil
 }
 
-func (db *entStore) Close() error {
+func (db *Database) Close() error {
 	return db.client.Close()
 }

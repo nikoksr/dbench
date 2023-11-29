@@ -17,6 +17,15 @@ setup:
 build: ./**/*.go
 	go build -o bin/ ./...
 
+clean:
+	@rm -rf bin/ \
+		completions/ \
+		dist/ \
+		tmp/ \
+		dbench/ \
+		dbench* \
+		coverage.txt
+
 test:
 	go test -failfast -race -timeout=5m ./...
 
@@ -38,4 +47,4 @@ release:
 	echo $${NEXT}
 	git push origin --tags
 
-.PHONY: dev setup build test cover fmt lint ci schema-generate docs-generate docs-releases docs-imgs docs-serve docs-build release
+.PHONY: all dev setup build docker-build docker-run clean test cover fmt lint ci release

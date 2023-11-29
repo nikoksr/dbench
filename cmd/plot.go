@@ -7,17 +7,26 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/nikoksr/dbench/cmd/cobrax"
+	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/plot"
-	"github.com/nikoksr/dbench/internal/store"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
-func newPlotCommand() *cobra.Command {
-	var (
-		outputDir      string
-		cleanOutputDir bool
-	)
+type plotOptions struct {
+	*globalOptions
+
+	outputDir      string
+	cleanOutputDir bool
+}
+
+func newPlotCommand(globalOpts *globalOptions) *cobra.Command {
+	opts := &plotOptions{
+		globalOptions: globalOpts,
+	}
+
+	db := new(database.Database)
 
 	cmd := &cobra.Command{
 		Use:                   "plot [OPTIONS] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
@@ -29,24 +38,20 @@ func newPlotCommand() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check if gnuplot is installed
-			if !isToolInPath("gnuplot") {
-				return gnuPlotNotInstalledErr
-			}
-
-			return nil
-		},
+		PreRunE: cobrax.HooksE(
+			gnuplotInstalledHook(),
+			prepareDBHook(db, globalOpts.dataDir),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get benchmark-group IDs
 			benchmarkGroupIDs := args
 
 			// Cleanup output directory
-			if cleanOutputDir {
+			if opts.cleanOutputDir {
 				fmt.Printf("%s\n", styles.Title.Render("Cleanup"))
-				msg := fmt.Sprintf("Cleaning output directory (%s)", outputDir)
+				msg := fmt.Sprintf("Cleaning output directory (%s)", opts.outputDir)
 				fmt.Printf("%s\t", styles.Info.Render(msg))
-				if err := os.RemoveAll(outputDir); err != nil {
+				if err := os.RemoveAll(opts.outputDir); err != nil {
 					fmt.Printf("%s\n", styles.Error.Render("✗ Failed"))
 					return fmt.Errorf("cleanup output directory: %w", err)
 				}
@@ -54,7 +59,7 @@ func newPlotCommand() *cobra.Command {
 			}
 
 			// Prepare output directory
-			if err := prepareDirectory(outputDir); err != nil {
+			if err := prepareDirectory(opts.outputDir); err != nil {
 				return fmt.Errorf("prepare output directory: %w", err)
 			}
 
@@ -63,7 +68,7 @@ func newPlotCommand() *cobra.Command {
 			fmt.Printf("%s\n\n", styles.Text.Render("Plotting benchmark-groups"))
 			for _, id := range benchmarkGroupIDs {
 				fmt.Printf("  %s\t", styles.Info.Render("Plotting "+id))
-				if err := plotBenchmarks(cmd.Context(), id, outputDir); err != nil {
+				if err := plotBenchmarks(cmd.Context(), db, id, opts.outputDir); err != nil {
 					fmt.Printf("  %s\n", styles.Error.Render("✗ Failed"))
 					return fmt.Errorf("plot benchmark-group %q: %w", id, err)
 				}
@@ -71,27 +76,22 @@ func newPlotCommand() *cobra.Command {
 			}
 
 			title := styles.Title.Render("Results")
-			message := fmt.Sprintf("%s:\n\n $ cd %s", styles.Text.Render("Plotting done! Check out the results in the output directory"), outputDir)
+			message := fmt.Sprintf("%s:\n\n $ cd %s", styles.Text.Render("Plotting done! Check out the results in the output directory"), opts.outputDir)
 			fmt.Printf("%s\n%s\n\n", title, message)
 
 			return nil
 		},
+		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
-	cmd.Flags().StringVarP(&outputDir, "output", "o", "dbench/plots", "Output directory for plots")
-	cmd.Flags().BoolVarP(&cleanOutputDir, "clean", "c", false, "Cleanup output directory before plotting")
+	cmd.Flags().StringVarP(&opts.outputDir, "output", "o", "dbench/plots", "Output directory for plots")
+	cmd.Flags().BoolVarP(&opts.cleanOutputDir, "clean", "c", false, "Cleanup output directory before plotting")
 
 	return cmd
 }
 
-func plotBenchmarks(ctx context.Context, id, outputDir string) error {
-	dbenchDB, err := store.New(ctx, dbenchDSN)
-	if err != nil {
-		return fmt.Errorf("create dbench database: %w", err)
-	}
-	defer dbenchDB.Close()
-
-	benchmarks, err := dbenchDB.FetchByGroupIDs(ctx, []string{id})
+func plotBenchmarks(ctx context.Context, db database.BenchmarkRepo, id, outputDir string) error {
+	benchmarks, err := db.FetchByGroupIDs(ctx, []string{id})
 	if err != nil {
 		return fmt.Errorf("fetch benchmarks by benchmark-group ID: %w", err)
 	}

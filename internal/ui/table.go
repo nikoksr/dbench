@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	prettytext "github.com/jedib0t/go-pretty/v6/text"
 
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/ui/text"
@@ -76,6 +77,10 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 		{
 			Name:     "Comment",
 			WidthMax: 30,
+		},
+		{
+			Name:  "TPS",
+			Align: prettytext.AlignRight,
 		},
 	})
 

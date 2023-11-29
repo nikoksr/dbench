@@ -16,7 +16,8 @@ import (
 type listOptions struct {
 	*globalOptions
 
-	sort []string
+	sort          []string
+	page, perPage int
 }
 
 func newListCommand(globalOpts *globalOptions) *cobra.Command {
@@ -52,7 +53,11 @@ func newListCommand(globalOpts *globalOptions) *cobra.Command {
 				return query
 			}
 
-			benchmarks, err := db.Fetch(cmd.Context(), database.WithOrderBy(orderByFunc))
+			benchmarks, err := db.Fetch(cmd.Context(),
+				database.WithOrderBy(orderByFunc),
+				database.WithLimit(opts.perPage),
+				database.WithOffset((opts.page-1)*opts.perPage),
+			)
 			if err != nil {
 				return fmt.Errorf("fetch benchmarks: %w", err)
 			}
@@ -69,6 +74,8 @@ func newListCommand(globalOpts *globalOptions) *cobra.Command {
 
 	// Flags
 	cmd.Flags().StringSliceVar(&opts.sort, "sort", []string{"id"}, "Sort benchmarks columns (+/- prefix for ascending/descending)")
+	cmd.Flags().IntVar(&opts.page, "page", 1, "Page number")
+	cmd.Flags().IntVar(&opts.perPage, "per-page", 10, "Number of benchmarks per page")
 
 	return cmd
 }

@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/fs"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/cmd/cobrax"
 	"github.com/nikoksr/dbench/internal/build"
-	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/export"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
@@ -19,12 +18,10 @@ type exportOptions struct {
 	format string
 }
 
-func newExportCommand(globalOpts *globalOptions) *cobra.Command {
+func newExportCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
 	opts := &exportOptions{
 		globalOptions: globalOpts,
 	}
-
-	db := new(database.Database)
 
 	generateExportFileName := func(fileFormat string) string {
 		localTime := time.Now().Local().Format("2006-01-02_15-04-05")
@@ -41,8 +38,13 @@ func newExportCommand(globalOpts *globalOptions) *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.NoArgs,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE:               cobrax.HooksE(prepareDBHook(db, globalOpts.dataDir)),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Connect to database
+			db, err := connectToDB(cmd.Context(), opts.dataDir, fs.OSFileSystem{})
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
+			}
+
 			// Query benchmarks
 			benchmarks, err := db.Fetch(cmd.Context())
 			if err != nil {
@@ -72,7 +74,6 @@ func newExportCommand(globalOpts *globalOptions) *cobra.Command {
 
 			return nil
 		},
-		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	// Flags

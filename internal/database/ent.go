@@ -2,10 +2,10 @@ package database
 
 import (
 	"context"
-	"fmt"
-
 	"entgo.io/ent/dialect"
+	"fmt"
 	_ "github.com/xiaoqidun/entps" // Modernc wrapper for ent
+	"sync"
 
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/ent/benchmark"
@@ -14,34 +14,59 @@ import (
 	"github.com/nikoksr/dbench/internal/models"
 )
 
-var _ BenchmarkRepo = (*Database)(nil)
+var _ Store = (*DB)(nil)
 
-type Database struct {
-	client *ent.Client
+// DB is a struct that represents a database connection.
+type DB struct {
+	client      *ent.Client
+	connectOnce sync.Once
+	err         error
 }
 
-func New(ctx context.Context, dsn string) (*Database, error) {
-	client, err := ent.Open(dialect.SQLite, dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := client.Schema.Create(ctx,
-		migrate.WithDropIndex(true),
-		migrate.WithDropColumn(true),
-	); err != nil {
-		return nil, fmt.Errorf("create schema resources: %v", err)
-	}
-
-	return &Database{client: client}, nil
+// New creates a new DB instance. Call Connect() to establish a connection.
+func New() *DB {
+	return &DB{}
 }
 
-func (db *Database) IsReady() error {
+// Connect establishes a connection to the database.
+// It uses the sync.Once.Do function to ensure that the connection is only established once.
+func (db *DB) Connect(ctx context.Context, dsn string) (*DB, error) {
+	db.connectOnce.Do(func() {
+		// Open database connection
+		db.client, db.err = ent.Open(dialect.SQLite, dsn)
+		if db.err != nil {
+			return
+		}
+
+		// If successful, run migration
+		if err := db.client.Schema.Create(ctx,
+			migrate.WithDropIndex(true),
+			migrate.WithDropColumn(true),
+		); err != nil {
+			db.err = fmt.Errorf("create schema resources: %v", err)
+		}
+
+	})
+
+	return db, db.err
+}
+
+// IsReady checks if the database client is ready.
+func (db *DB) IsReady() error {
 	if db.client == nil {
 		return fmt.Errorf("database client is nil")
 	}
 
 	return nil
+}
+
+// Close closes the database connection.
+func (db *DB) Close() error {
+	if db.client == nil {
+		return fmt.Errorf("database client is nil")
+	}
+
+	return db.client.Close()
 }
 
 // rollback calls to tx.Rollback and wraps the given error
@@ -53,7 +78,15 @@ func rollback(tx *ent.Tx, err error) error {
 	return err
 }
 
-func (db *Database) Save(ctx context.Context, benchmark *models.Benchmark) (*models.Benchmark, error) {
+// Count returns the count of benchmarks in the database.
+func (db *DB) Count(ctx context.Context, options ...QueryOption) (int, error) {
+	query := applyQueryOptions(db.client.Benchmark.Query(), options...)
+
+	return query.Count(ctx)
+}
+
+// Save saves a benchmark to the database.
+func (db *DB) Save(ctx context.Context, benchmark *models.Benchmark) (*models.Benchmark, error) {
 	tx, err := db.client.Tx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("start transaction: %w", err)
@@ -121,7 +154,8 @@ func (db *Database) Save(ctx context.Context, benchmark *models.Benchmark) (*mod
 	return benchmark, nil
 }
 
-func (db *Database) Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
+// Fetch fetches benchmarks from the database.
+func (db *DB) Fetch(ctx context.Context, options ...QueryOption) ([]*models.Benchmark, error) {
 	query := applyQueryOptions(db.client.Benchmark.Query(), options...)
 
 	return query.
@@ -131,7 +165,8 @@ func (db *Database) Fetch(ctx context.Context, options ...QueryOption) ([]*model
 		All(ctx)
 }
 
-func (db *Database) FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+// FetchByIDs fetches benchmarks by their IDs.
+func (db *DB) FetchByIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark ID provided")
@@ -152,7 +187,8 @@ func (db *Database) FetchByIDs(ctx context.Context, ids []string, options ...Que
 	return db.Fetch(ctx, options...)
 }
 
-func (db *Database) FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
+// FetchByGroupIDs fetches benchmarks by their group IDs.
+func (db *DB) FetchByGroupIDs(ctx context.Context, ids []string, options ...QueryOption) ([]*ent.Benchmark, error) {
 	// Check if ids are given
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("no benchmark-group ID provided")
@@ -173,7 +209,19 @@ func (db *Database) FetchByGroupIDs(ctx context.Context, ids []string, options .
 	return db.Fetch(ctx, options...)
 }
 
-func (db *Database) RemoveByIDs(ctx context.Context, ids []string) error {
+// FetchGroupIDs fetches group IDs from the database.
+func (db *DB) FetchGroupIDs(ctx context.Context, options ...QueryOption) ([]string, error) {
+	if db.client == nil {
+		return nil, fmt.Errorf("database client is nil")
+	}
+
+	query := applyQueryOptions(db.client.Benchmark.Query(), options...)
+
+	return query.Select(benchmark.FieldGroupID).Strings(ctx)
+}
+
+// RemoveByIDs removes benchmarks by their IDs.
+func (db *DB) RemoveByIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -186,7 +234,8 @@ func (db *Database) RemoveByIDs(ctx context.Context, ids []string) error {
 	return err
 }
 
-func (db *Database) RemoveByGroupIDs(ctx context.Context, ids []string) error {
+// RemoveByGroupIDs removes benchmarks by their group IDs.
+func (db *DB) RemoveByGroupIDs(ctx context.Context, ids []string) error {
 	// Convert string ids to pulid.ID
 	pulids, err := convertToPULID(ids)
 	if err != nil {
@@ -199,7 +248,8 @@ func (db *Database) RemoveByGroupIDs(ctx context.Context, ids []string) error {
 	return err
 }
 
-func (db *Database) SaveSystemDetails(ctx context.Context, systemDetails *models.SystemDetails) (*models.SystemDetails, error) {
+// SaveSystemDetails saves system details to the database.
+func (db *DB) SaveSystemDetails(ctx context.Context, systemDetails *models.SystemDetails) (*models.SystemDetails, error) {
 	// Check if system details with machine ID already exists
 	if systemDetails.MachineID != nil {
 		_systemDetails, err := db.client.SystemDetails.Query().
@@ -233,8 +283,4 @@ func (db *Database) SaveSystemDetails(ctx context.Context, systemDetails *models
 	}
 
 	return _systemDetails, nil
-}
-
-func (db *Database) Close() error {
-	return db.client.Close()
 }

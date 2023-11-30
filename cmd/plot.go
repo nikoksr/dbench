@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/nikoksr/dbench/internal/fs"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -21,12 +22,10 @@ type plotOptions struct {
 	cleanOutputDir bool
 }
 
-func newPlotCommand(globalOpts *globalOptions) *cobra.Command {
+func newPlotCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
 	opts := &plotOptions{
 		globalOptions: globalOpts,
 	}
-
-	db := new(database.Database)
 
 	cmd := &cobra.Command{
 		Use:                   "plot [OPTIONS] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
@@ -37,12 +36,14 @@ func newPlotCommand(globalOpts *globalOptions) *cobra.Command {
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
-		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE: cobrax.HooksE(
-			gnuplotInstalledHook(),
-			prepareDBHook(db, globalOpts.dataDir),
-		),
+		PreRunE:               cobrax.HooksE(gnuplotInstalledHook()),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Connect to database
+			db, err := connectToDB(cmd.Context(), opts.dataDir, fs.OSFileSystem{})
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
+			}
+
 			// Get benchmark-group IDs
 			benchmarkGroupIDs := args
 
@@ -81,7 +82,6 @@ func newPlotCommand(globalOpts *globalOptions) *cobra.Command {
 
 			return nil
 		},
-		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	cmd.Flags().StringVarP(&opts.outputDir, "output", "o", "dbench/plots", "Output directory for plots")
@@ -90,7 +90,7 @@ func newPlotCommand(globalOpts *globalOptions) *cobra.Command {
 	return cmd
 }
 
-func plotBenchmarks(ctx context.Context, db database.BenchmarkRepo, id, outputDir string) error {
+func plotBenchmarks(ctx context.Context, db database.Store, id, outputDir string) error {
 	benchmarks, err := db.FetchByGroupIDs(ctx, []string{id})
 	if err != nil {
 		return fmt.Errorf("fetch benchmarks by benchmark-group ID: %w", err)

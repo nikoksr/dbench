@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/fs"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -12,7 +13,6 @@ import (
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 	"github.com/nikoksr/dbench/internal/benchmark"
 	"github.com/nikoksr/dbench/internal/build"
-	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/system"
 	"github.com/nikoksr/dbench/internal/ui/styles"
@@ -45,12 +45,10 @@ type runOptions struct {
 	collectSystemDetails bool
 }
 
-func newRunCommand(globalOpts *globalOptions) *cobra.Command {
+func newRunCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
 	opts := &runOptions{
 		globalOptions: globalOpts,
 	}
-
-	db := new(database.Database)
 
 	cmd := &cobra.Command{
 		Use:     "run [OPTIONS]",
@@ -79,14 +77,17 @@ options listed below.`,
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE: cobrax.HooksE(
-			pgbenchInstalledHook(),
-			prepareDBHook(db, globalOpts.dataDir),
-		),
+		PreRunE:               cobrax.HooksE(pgbenchInstalledHook()),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Connect to database
+			db, err := connectToDB(cmd.Context(), opts.dataDir, fs.OSFileSystem{})
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
+			}
+
+			// Prompt for database password
 			fmt.Printf("%s\n", styles.Title.Render("Authentication"))
 
-			// Prompt for password
 			password, canceled, err := getDBPassword()
 			if err != nil {
 				return fmt.Errorf("get database password: %w", err)
@@ -169,7 +170,6 @@ options listed below.`,
 
 			return nil
 		},
-		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	// Store flags

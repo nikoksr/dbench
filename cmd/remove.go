@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/nikoksr/dbench/internal/fs"
 
 	"github.com/spf13/cobra"
 	"go.jetpack.io/typeid"
 
-	"github.com/nikoksr/dbench/cmd/cobrax"
-	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
@@ -15,12 +14,10 @@ type removeOptions struct {
 	*globalOptions
 }
 
-func newRemoveCommand(globalOpts *globalOptions) *cobra.Command {
+func newRemoveCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
 	opts := &removeOptions{
 		globalOptions: globalOpts,
 	}
-
-	db := new(database.Database)
 
 	cmd := &cobra.Command{
 		Use:                   "remove ID [ID...]",
@@ -32,8 +29,13 @@ func newRemoveCommand(globalOpts *globalOptions) *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		PreRunE:               cobrax.HooksE(prepareDBHook(db, opts.dataDir)),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Connect to database
+			db, err := connectToDB(cmd.Context(), opts.dataDir, fs.OSFileSystem{})
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
+			}
+
 			// Convert and validate ids
 			fmt.Printf("%s\n", styles.Title.Render("Validation"))
 			fmt.Printf("%s\t", styles.Text.Render("Validating ids..."))
@@ -91,7 +93,6 @@ func newRemoveCommand(globalOpts *globalOptions) *cobra.Command {
 
 			return nil
 		},
-		PostRunE: cobrax.HooksE(closeDatabaseHook(db)),
 	}
 
 	return cmd

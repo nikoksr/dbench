@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/nikoksr/dbench/internal/fs"
-	"github.com/nikoksr/dbench/internal/ui/styles"
-	"github.com/nikoksr/dbench/internal/ui/text"
 	"math"
 	"strings"
 
@@ -13,7 +10,10 @@ import (
 
 	"github.com/nikoksr/dbench/ent"
 	"github.com/nikoksr/dbench/internal/database"
+	"github.com/nikoksr/dbench/internal/fs"
 	"github.com/nikoksr/dbench/internal/ui"
+	"github.com/nikoksr/dbench/internal/ui/styles"
+	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 const (
@@ -31,6 +31,14 @@ type listOptions struct {
 
 func (opts *listOptions) validate(recordsCount int) []error {
 	var errs []error
+
+	// Special case: show all
+	if opts.showAll {
+		opts.perPage = recordsCount
+		opts.page = 1
+		opts.totalPages = 1
+		return errs
+	}
 
 	// Avoid negative page numbers
 	if opts.page < 1 {
@@ -130,7 +138,7 @@ func newListCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.C
 	cmd.Flags().StringSliceVar(&opts.sort, "sort", []string{"id"}, "Sort benchmarks columns (+/- prefix for ascending/descending)")
 	cmd.Flags().IntVar(&opts.page, "page", defaultPage, "Page number")
 	cmd.Flags().IntVar(&opts.perPage, "per-page", defaultPerPage, "Number of benchmarks per page")
-	cmd.Flags().BoolVar(&opts.showAll, "all", false, "Show all benchmarks")
+	cmd.Flags().BoolVarP(&opts.showAll, "all", "a", false, "Show all benchmarks")
 
 	return cmd
 }

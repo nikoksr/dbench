@@ -116,7 +116,7 @@ set tmargin 5
 set xlabel "Number of Clients"
 set ylabel "Transactions Per Second per CPU Average Load"
 set grid
-plot '{{ .DataPath }}' using "Clients":($12/$19) title "Transactions/sec per CPU Load" with lines
+plot '{{ .DataPath }}' using "Clients":(column("TransactionsPerSecond")/column("CPUAverageLoad")) title "Transactions/sec per CPU Load" with lines
 `
 
 	transactionsLatencyConnTimeOverClients = `set datafile separator ","

@@ -1,5 +1,4 @@
-// Package export provides functionality to export data in various formats.
-package export
+package exporter
 
 import (
 	"encoding/csv"

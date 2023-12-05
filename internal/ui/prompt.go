@@ -2,30 +2,45 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/nikoksr/dbench/internal/ui/styles"
 )
-
-var _ Component = &Prompt{}
 
 // Prompt is a component that renders a text input field with a prompt.
 type Prompt struct {
 	model *promptModel
 }
 
+func countLeadingChars(text string, char byte) int {
+	count := 0
+	for i := 0; i < len(text); i++ {
+		if text[i] == char {
+			count++
+		} else {
+			break
+		}
+	}
+
+	return count
+}
+
 // NewPrompt returns a new Prompt component with the given text and placeholder.
 func NewPrompt(text, placeholder string, sensitive bool) *Prompt {
+	// Calculate the indent for the prompt
+	indent := countLeadingChars(text, ' ')
+
 	ti := textinput.New()
 	ti.Placeholder = placeholder
-	ti.CharLimit = 256
-	ti.Width = 50
-	ti.PromptStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#f8f8f2"))
+	ti.CharLimit = 64
+	ti.Width = 64
+	ti.TextStyle = styles.Hint()
+	ti.PromptStyle = styles.Info().Italic(false)
 	ti.Focus()
+	ti.Prompt = strings.Repeat(" ", indent) + "> "
 
 	if sensitive {
 		ti.EchoMode = textinput.EchoPassword
@@ -34,7 +49,7 @@ func NewPrompt(text, placeholder string, sensitive bool) *Prompt {
 	return &Prompt{
 		model: &promptModel{
 			textInput: ti,
-			text:      text,
+			text:      styles.Info().Render(text),
 		},
 	}
 }
@@ -99,7 +114,7 @@ func (m *promptModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *promptModel) View() string {
 	return fmt.Sprintf(
 		"%s\n\n%s\n\n%s",
-		styles.Text.Render(m.text),
+		styles.Text().Render(m.text),
 		m.textInput.View(),
 		"",
 	)

@@ -13,20 +13,26 @@ import (
 	"github.com/nikoksr/dbench/ent/schema/pulid"
 )
 
-// SystemDetails struct extends ent.Schema, defines the SystemDetails table in the database.
-type SystemDetails struct {
+// SystemConfig struct extends ent.Schema, defines the SystemConfig table in the database.
+type SystemConfig struct {
 	ent.Schema
 }
 
-// SystemDetailsMixin is a struct with embedded mixin.Schema.
-type SystemDetailsMixin struct {
+// SystemConfigMixin is a struct with embedded mixin.Schema.
+type SystemConfigMixin struct {
 	mixin.Schema
 }
 
-// Fields method defines the fields within the SystemDetails database table.
-func (SystemDetailsMixin) Fields() []ent.Field {
+// Fields method defines the fields within the SystemConfig database table.
+func (SystemConfigMixin) Fields() []ent.Field {
 	return []ent.Field{
-		// The unique identifier of the machine this system info belongs to.
+		// The benchmark this result belongs to.
+		field.String("benchmark_id").
+			GoType(pulid.ID("")).
+			Immutable().
+			Unique(),
+		// The unique identifier of the machine this system info belongs to. We can't set this field as unique,
+		// because it's nullable.
 		field.String("machine_id").
 			Optional().
 			Nillable().
@@ -84,40 +90,46 @@ func (SystemDetailsMixin) Fields() []ent.Field {
 	}
 }
 
-// Mixin function defines the mixins to be incorporated into the SystemDetails schema.
-func (SystemDetails) Mixin() []ent.Mixin {
+// Mixin function defines the mixins to be incorporated into the SystemConfig schema.
+func (SystemConfig) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		// Primary key using PULIDs
 		pulid.NewMixinWithPrefix("id", "sdet"),
-		// The SystemDetails itself
-		SystemDetailsMixin{},
+		// The SystemConfig itself
+		SystemConfigMixin{},
 		// CreatedAt and UpdatedAt timestamps
 		datetime.NewMixin(),
 	}
 }
 
-// Edges function defines the relations/edges of the SystemDetails schema.
-func (SystemDetails) Edges() []ent.Edge {
+// Edges function defines the relations/edges of the SystemConfig schema.
+func (SystemConfig) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("benchmarks", Benchmark.Type).
-			Comment("The benchmarks that were run on this system."),
+		edge.From("benchmark", Benchmark.Type).
+			Ref("system").
+			Field("benchmark_id").
+			Unique().
+			Required().
+			Immutable().
+			Comment("The benchmark that was run against this system config."),
 	}
 }
 
-// Indexes function defines the indexed fields for faster queries on the SystemDetails schema.
-func (SystemDetails) Indexes() []ent.Index {
+// Indexes function defines the indexed fields for faster queries on the SystemConfig schema.
+func (SystemConfig) Indexes() []ent.Index {
 	return []ent.Index{
-		// Index the machine_id column for faster lookups on system details of a specific machine.
+		// Index the machine_id column for faster lookups on system config of a specific machine.
 		//
 		// Note: machine_id can't be unique, as it's nullable.
 		index.Fields("machine_id"),
 	}
 }
 
-// Annotations function adds annotations to the SystemDetails schema.
-func (SystemDetails) Annotations() []schema.Annotation {
+// Annotations function adds annotations to the SystemConfig schema.
+func (SystemConfig) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.WithComments(true),
-		schema.Comment("SystemDetails holds detailed information about the system the benchmark was run on."),
+		schema.Comment("SystemConfig holds detailed information about the system the benchmark was run on."),
+		edge.Annotation{StructTag: `json:"-"`},
 	}
 }

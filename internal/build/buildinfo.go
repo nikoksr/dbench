@@ -4,4 +4,4 @@ package build
 const AppName = "dbench"
 
 // Version is the version of the application. It is set by the linker.
-var Version = "unknown"
+var Version = "dev"

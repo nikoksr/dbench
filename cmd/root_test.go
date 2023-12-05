@@ -76,6 +76,8 @@ func TestDetermineDefaultDataPath(t *testing.T) {
 func TestBuildDSN(t *testing.T) {
 	t.Parallel()
 
+	// return "file:" + filepath.Join(dataDir, build.AppName) + ".db"
+
 	// Test cases
 	tests := []struct {
 		name     string
@@ -85,12 +87,12 @@ func TestBuildDSN(t *testing.T) {
 		{
 			name:     "valid path",
 			dataDir:  "/path/to/data",
-			expected: "file:/path/to/data/" + build.AppName + ".db?cache=shared&_fk=1",
+			expected: "file:/path/to/data/" + build.AppName + ".db",
 		},
 		{
 			name:     "empty path",
 			dataDir:  "",
-			expected: "file:" + build.AppName + ".db?cache=shared&_fk=1",
+			expected: "file:" + build.AppName + ".db",
 		},
 	}
 
@@ -99,7 +101,7 @@ func TestBuildDSN(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			dsn := buildDSN(tc.dataDir)
+			dsn := getDefaultDSN(tc.dataDir)
 			assert.Equal(t, tc.expected, dsn)
 		})
 	}

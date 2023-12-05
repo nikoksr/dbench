@@ -9,36 +9,33 @@ import (
 
 	"github.com/nikoksr/dbench/internal/build"
 	"github.com/nikoksr/dbench/internal/models"
+	"github.com/nikoksr/dbench/internal/pointer"
 )
 
-func toPointer[T any](v T) *T {
-	return &v
-}
-
-// GetDetails collects information about the system and returns it as a SystemDetails struct. If an error occurs, the
+// GetConfig collects information about the system and returns it as a SystemConfig struct. If an error occurs, the
 // method will not stop but continue to collect information. The errors will be returned as a slice. We do this since
-// the system details are not essential for dbench to run and should not prevent the user from running a benchmark.
-func GetDetails() (*models.SystemDetails, []error) {
+// the system config are not essential for dbench to run and should not prevent the user from running a benchmark.
+func GetConfig() (*models.SystemConfig, []error) {
 	var errs []error
-	details := new(models.SystemDetails)
+	systemconfig := new(models.SystemConfig)
 
 	// Generate a unique machine ID
 	id, err := machineid.ProtectedID(build.AppName)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("generate machine id: %w", err))
 	} else {
-		details.MachineID = toPointer(id)
+		systemconfig.MachineID = pointer.To(id)
 	}
 
 	// Collect information about the OS
-	setOSDetails(details)
+	setOSConfig(systemconfig)
 
 	// Collect information about the CPU
 	cpu, err := ghw.CPU()
 	if err != nil {
 		errs = append(errs, fmt.Errorf("get cpu info: %w", err))
 	} else {
-		setCPUDetails(cpu, details)
+		setCPUConfig(cpu, systemconfig)
 	}
 
 	// Collect information about the RAM
@@ -46,7 +43,7 @@ func GetDetails() (*models.SystemDetails, []error) {
 	if err != nil {
 		errs = append(errs, fmt.Errorf("get memory info: %w", err))
 	} else {
-		setRAMDetails(memory, details)
+		setRAMConfig(memory, systemconfig)
 	}
 
 	// Collect information about the disks
@@ -54,35 +51,35 @@ func GetDetails() (*models.SystemDetails, []error) {
 	if err != nil {
 		errs = append(errs, fmt.Errorf("get block info: %w", err))
 	} else {
-		setDiskDetails(block, details)
+		setDiskConfig(block, systemconfig)
 	}
 
-	return details, errs
+	return systemconfig, errs
 }
 
-func setOSDetails(details *models.SystemDetails) {
-	details.OsName = toPointer(runtime.GOOS)
-	details.OsArch = toPointer(runtime.GOARCH)
+func setOSConfig(systemconfig *models.SystemConfig) {
+	systemconfig.OsName = pointer.To(runtime.GOOS)
+	systemconfig.OsArch = pointer.To(runtime.GOARCH)
 }
 
-func setCPUDetails(cpu *ghw.CPUInfo, details *models.SystemDetails) {
-	details.CPUVendor = &cpu.Processors[0].Vendor
-	details.CPUModel = &cpu.Processors[0].Model
-	details.CPUCount = toPointer(uint32(len(cpu.Processors)))
-	details.CPUCores = &cpu.TotalCores
-	details.CPUThreads = &cpu.TotalThreads
+func setCPUConfig(cpu *ghw.CPUInfo, systemconfig *models.SystemConfig) {
+	systemconfig.CPUVendor = &cpu.Processors[0].Vendor
+	systemconfig.CPUModel = &cpu.Processors[0].Model
+	systemconfig.CPUCount = pointer.To(uint32(len(cpu.Processors)))
+	systemconfig.CPUCores = &cpu.TotalCores
+	systemconfig.CPUThreads = &cpu.TotalThreads
 }
 
-func setRAMDetails(memory *ghw.MemoryInfo, details *models.SystemDetails) {
+func setRAMConfig(memory *ghw.MemoryInfo, systemconfig *models.SystemConfig) {
 	if memory.TotalPhysicalBytes > 0 {
-		details.RAMPhysical = toPointer(uint64(memory.TotalPhysicalBytes))
+		systemconfig.RAMPhysical = pointer.To(uint64(memory.TotalPhysicalBytes))
 	}
 	if memory.TotalUsableBytes > 0 {
-		details.RAMUsable = toPointer(uint64(memory.TotalUsableBytes))
+		systemconfig.RAMUsable = pointer.To(uint64(memory.TotalUsableBytes))
 	}
 }
 
-func setDiskDetails(block *ghw.BlockInfo, details *models.SystemDetails) {
-	details.DiskCount = toPointer(uint32(len(block.Disks)))
-	details.DiskSpaceTotal = toPointer(block.TotalPhysicalBytes)
+func setDiskConfig(block *ghw.BlockInfo, systemconfig *models.SystemConfig) {
+	systemconfig.DiskCount = pointer.To(uint32(len(block.Disks)))
+	systemconfig.DiskSpaceTotal = pointer.To(block.TotalPhysicalBytes)
 }

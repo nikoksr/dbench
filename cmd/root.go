@@ -3,27 +3,48 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/nikoksr/dbench/cmd/cobrax"
-	"github.com/nikoksr/dbench/internal/database"
-	"github.com/spf13/cobra"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	"github.com/nikoksr/dbench/cmd/cobrax"
 	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/database"
 	"github.com/nikoksr/dbench/internal/env"
 	"github.com/nikoksr/dbench/internal/fs"
+	"github.com/nikoksr/dbench/internal/ui/printer"
 )
+
+func getDefaultDSN(dataDir string) string {
+	return "file:" + filepath.Join(dataDir, build.AppName) + ".db"
+}
+
+func printMigrationWarning(w io.Writer) {
+	// Print header
+	p := printer.NewPrinter(w)
+	p.PrintlnTitle("Migration")
+	p.PrintlnHint(
+		fmt.Sprintf(
+			"Detected a new version of %s (%s). Your existing database needs to be migrated to the new schema. This is done automatically for you, please be patient.",
+			build.AppName,
+			build.Version,
+		),
+		printer.WithParagraphMode(),
+	)
+}
 
 // dbConnector is a function type that returns a new database connection. It is used by all subcommands to get a
 // database connection. We return the database.Store interface instead of the database.DB struct to avoid accidentally
 // calling the Close() method on the database connection in a subcommand. The Close() method is only called once after
 // all subcommands have finished by the root's PersistentPostRunE hook.
-type dbConnector func(ctx context.Context, dataDir string, fs fs.FileSystem) (database.Store, error)
+type dbConnector func(ctx context.Context, dataDir string, noMigration bool, fs fs.FileSystem) (database.Store, error)
 
 func newDBConnector(db *database.DB) dbConnector {
-	connector := func(ctx context.Context, dataDir string, fs fs.FileSystem) (database.Store, error) {
+	connector := func(ctx context.Context, dataDir string, noMigration bool, fs fs.FileSystem) (database.Store, error) {
 		if dataDir == "" {
 			return nil, fmt.Errorf("path to data directory is empty")
 		}
@@ -34,16 +55,28 @@ func newDBConnector(db *database.DB) dbConnector {
 		}
 
 		// Set database DSN
-		dbenchDSN := buildDSN(dataDir)
+		dbenchDSN := getDefaultDSN(dataDir)
 
 		// Open database connection
 		if _, err := db.Connect(ctx, dbenchDSN); err != nil {
 			return nil, err
 		}
 
-		// Check if database is ready
-		if err := db.IsReady(); err != nil {
-			return nil, fmt.Errorf("database is not ready: %w", err)
+		// Check if we need to run migrations
+		if noMigration {
+			return db, nil
+		}
+
+		shouldMigrate, err := db.ShouldMigrate(ctx, build.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		if shouldMigrate {
+			printMigrationWarning(os.Stdout)
+			if err := db.AutoMigrate(ctx, build.Version); err != nil {
+				return nil, err
+			}
 		}
 
 		return db, nil
@@ -85,7 +118,8 @@ func determineDefaultDataPath(appName string, env env.Environment, fs fs.FileSys
 }
 
 type globalOptions struct {
-	dataDir string
+	dataDir     string
+	noMigration bool
 }
 
 func newRootCommand() *cobra.Command {
@@ -108,7 +142,7 @@ func newRootCommand() *cobra.Command {
 	}
 
 	// Print the version number without the app name
-	cmd.SetVersionTemplate("v{{.Version}}\n")
+	cmd.SetVersionTemplate("{{.Version}}\n")
 
 	cmd.AddGroup(&cobra.Group{
 		ID:    "commands",
@@ -125,6 +159,9 @@ func newRootCommand() *cobra.Command {
 
 	// Flags
 	cmd.PersistentFlags().StringVar(&opts.dataDir, "data-dir", dataDir, "Path to the data directory")
+	cmd.PersistentFlags().BoolVar(&opts.noMigration, "no-migration", false, "Disable automatic database migration")
+
+	_ = cmd.PersistentFlags().MarkHidden("no-migration")
 
 	// Subcommands
 	cmd.AddCommand(
@@ -133,11 +170,12 @@ func newRootCommand() *cobra.Command {
 		newRunCommand(opts, dbConnector),
 		newListCommand(opts, dbConnector),
 		newExportCommand(opts, dbConnector),
+		newImportCommand(opts, dbConnector),
 		newRemoveCommand(opts, dbConnector),
 		// Plotting
 		newPlotCommand(opts, dbConnector),
 		// Misc
-		newDoctorCommand(opts),
+		newDoctorCommand(opts, dbConnector),
 	)
 
 	return cmd

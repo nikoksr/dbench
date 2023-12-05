@@ -55,7 +55,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X github.com/nikoksr/dbench/internal/build.Version={{.Version}}"
+      - "-s -w -X github.com/nikoksr/dbench/internal/build.Version=v{{.Version}}"
 
 archives:
   - name_template: >-

@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -89,6 +90,8 @@ func (BenchmarkResult) Edges() []ent.Edge {
 // Annotations function adds annotations to the BenchmarkResult schema.
 func (BenchmarkResult) Annotations() []schema.Annotation {
 	return []schema.Annotation{
+		entsql.WithComments(true),
 		schema.Comment("Benchmark results are the produced and parsed results of a benchmark (pgbench) run. It is a one-to-one relation with the benchmark."),
+		edge.Annotation{StructTag: `json:"-"`},
 	}
 }

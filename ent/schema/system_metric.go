@@ -37,7 +37,6 @@ func newMetricField(name string) ent.Field {
 		}).
 		Positive().
 		Min(0).
-		Optional().
 		Immutable()
 }
 
@@ -100,7 +99,8 @@ func (SystemMetric) Edges() []ent.Edge {
 func (SystemMetric) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.WithComments(true),
-		entsql.Annotation{Table: "system_metrics"},
 		schema.Comment("System metrics are the system metrics of the host system we polled while the benchmark was running. It is a one-to-one relation to the benchmark table. We probe for CPU and memory usage while the benchmark is running, calculate the median and percentiles and store them here."),
+		entsql.Annotation{Table: "system_metrics"},
+		edge.Annotation{StructTag: `json:"-"`},
 	}
 }

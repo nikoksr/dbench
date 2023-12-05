@@ -2,22 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/fs"
 	"github.com/nikoksr/dbench/internal/system"
-	"github.com/nikoksr/dbench/internal/ui/styles"
+	"github.com/nikoksr/dbench/internal/ui/printer"
 	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 type doctorOptions struct {
 	*globalOptions
 
-	showSystemDetails bool
+	showSystemConfig bool
 }
 
-func newDoctorCommand(globalsOpts *globalOptions) *cobra.Command {
+func newDoctorCommand(globalsOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
 	opts := &doctorOptions{
 		globalOptions: globalsOpts,
 	}
@@ -28,49 +30,70 @@ func newDoctorCommand(globalsOpts *globalOptions) *cobra.Command {
 		Short:   "Check if dbench is ready to run",
 		Long: `Check if dbench is ready to run.
 
-Enabling the --system flag, dbench will show you the exact system details that would be collected during a benchmark if you execute 'dbench run' with the '--collect-sysinfo' flag.`,
+Enabling the --system flag, dbench will show you the exact system config that would be collected during a benchmark if you execute 'dbench run' with the '--collect-sysinfo' flag.`,
 		SilenceUsage:          true,
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.NoArgs,
 		ValidArgsFunction:     cobra.NoFileCompletions,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("%s\n", styles.Title.Render(fmt.Sprintf("%s v%s", build.AppName, build.Version)))
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Open database connection early. We need to check for potential migrations before printing the doc's
+			// output. This way we can show the user a meaningful error message if the database is not up-to-date.
+			connStart := time.Now()
+			db, err := connectToDB(cmd.Context(), opts.dataDir, opts.noMigration, fs.OSFileSystem{})
+			connDuration := time.Since(connStart).Round(time.Millisecond)
+
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
+			}
+
+			// Print header
+			p := printer.NewPrinter(cmd.OutOrStdout(), 30)
+			p.PrintlnTitle(fmt.Sprintf("%s %s", build.AppName, build.Version))
 
 			// Check dbench database
-			fmt.Printf("%s\n", styles.SubTitle.Render("Checking dbench database..."))
-			fmt.Print(styles.Info.Render("  Connecting ... "))
+			p.PrintlnSubTitle("Database")
+			p.PrintInfo(" Connecting ... ", printer.WithIndent())
+			p.PrintlnSuccess(connDuration.String())
+			p.PrintInfo(" Counting database records ... ", printer.WithIndent())
+			count, err := db.CountAll(cmd.Context())
+			if err != nil {
+				p.PrintlnError(err.Error())
+			} else {
+				p.PrintlnSuccess(fmt.Sprintf("%d records", count))
+			}
 
 			// Check required tools
-			fmt.Printf("\n%s\n", styles.SubTitle.Render("Checking required tools..."))
+			p.Spacer(2)
+			p.PrintlnSubTitle("Dependencies")
 
 			tools := []string{"pgbench", "gnuplot"}
 			for _, tool := range tools {
-				fmt.Printf(styles.Info.Render("  %s ... "), tool)
+				p.PrintInfo(fmt.Sprintf("  %s ... ", tool), printer.WithIndent())
 
 				if !isToolInPath(tool) {
-					fmt.Println(styles.Error.Render("✗ Not found"))
+					p.PrintlnError("not found")
 					continue
 				}
 
 				version, err := getToolVersion(tool)
 				if err != nil {
-					fmt.Printf("%s %s\n", styles.Error.Render("✗ Error:"), err)
+					p.PrintlnError(err.Error())
 					continue
 				}
 
-				fmt.Printf("%s (%s)\n", styles.Success.Render("✓ Found"), styles.Info.Render(version))
+				p.PrintlnSuccess(version)
 			}
 
-			fmt.Println()
+			p.Spacer(2)
 
 			// System information
-			if !opts.showSystemDetails {
-				return // Skip system details
+			if !opts.showSystemConfig {
+				return nil // Skip system config
 			}
 
-			fmt.Printf("%s\n", styles.SubTitle.Render("System Details"))
-			systemDetails, errs := system.GetDetails()
+			p.PrintlnSubTitle("Host system")
+			systemConfig, errs := system.GetConfig()
 
 			// Pretty print errors
 			if len(errs) > 0 {
@@ -78,32 +101,60 @@ Enabling the --system flag, dbench will show you the exact system details that w
 			}
 
 			for _, err := range errs {
-				fmt.Printf("  %s %v\n", styles.Error.Render("Warning:"), err)
+				p.PrintlnWarning(err.Error())
 			}
 
 			if len(errs) > 0 {
 				fmt.Println() // Conditional newline
 			}
 
-			// Print system details
-			fmt.Printf("  %s: %s\n", styles.Info.Render("Machine ID"), text.ValueOrNA(systemDetails.MachineID))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("OS Name"), text.ValueOrNA(systemDetails.OsName))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("OS Architecture"), text.ValueOrNA(systemDetails.OsArch))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("CPUs Count"), text.ValueOrNA(systemDetails.CPUCount))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("CPU Vendor"), text.ValueOrNA(systemDetails.CPUVendor))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("CPU Model"), text.ValueOrNA(systemDetails.CPUModel))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("CPU Cores"), text.ValueOrNA(systemDetails.CPUCores))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("CPU Threads"), text.ValueOrNA(systemDetails.CPUThreads))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("RAM Physical"), text.HumanizeBytes(systemDetails.RAMPhysical))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("RAM Usable"), text.HumanizeBytes(systemDetails.RAMUsable))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("Disk Count"), text.ValueOrNA(systemDetails.DiskCount))
-			fmt.Printf("  %s: %s\n", styles.Info.Render("Disk Total"), text.HumanizeBytes(systemDetails.DiskSpaceTotal))
+			// Print system config
 
-			fmt.Println()
+			p.PrintInfo("  Machine ID:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.MachineID))
+
+			p.PrintInfo("  OS Name:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.OsName))
+
+			p.PrintInfo("  OS Architecture:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.OsArch))
+
+			p.PrintInfo("  CPUs Count:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.CPUCount))
+
+			p.PrintInfo("  CPU Vendor:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.CPUVendor))
+
+			p.PrintInfo("  CPU Model:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.CPUModel))
+
+			p.PrintInfo("  CPU Cores:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.CPUCores))
+
+			p.PrintInfo("  CPU Threads:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.CPUThreads))
+
+			p.PrintInfo("  RAM Physical:", printer.WithIndent())
+			p.PrintlnInfo(text.HumanizeBytes(systemConfig.RAMPhysical))
+
+			p.PrintInfo("  RAM Usable:", printer.WithIndent())
+			p.PrintlnInfo(text.HumanizeBytes(systemConfig.RAMUsable))
+
+			p.PrintInfo("  Disk Count:", printer.WithIndent())
+			p.PrintlnInfo(text.ValueOrNA(systemConfig.DiskCount))
+
+			p.PrintInfo("  Disk Total:", printer.WithIndent())
+			p.PrintlnInfo(text.HumanizeBytes(systemConfig.DiskSpaceTotal))
+
+			p.Spacer(1)
+
+			return nil
 		},
 	}
 
-	cmd.Flags().BoolVarP(&opts.showSystemDetails, "sysinfo", "s", false, "Show detailed system information")
+	cmd.Flags().BoolVar(&opts.showSystemConfig, "sysinfo", false, "Show detailed system information")
+
+	cmd.Flags().SortFlags = false
 
 	return cmd
 }

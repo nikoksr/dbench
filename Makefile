@@ -11,11 +11,11 @@ dev:
 	cp -f scripts/pre-commit.sh .git/hooks/pre-commit
 
 setup:
-	go generate ./...
 	go mod tidy
 
-build: ./**/*.go
-	go build -o bin/ ./...
+build:
+	go generate ./...
+	go build -o bin/ -ldflags="-s -w -X github.com/nikoksr/dbench/internal/build.Version=$(shell git describe --tags --always --dirty)"
 
 clean:
 	@rm -rf bin/ \
@@ -40,6 +40,13 @@ lint:
 	golangci-lint run ./...
 
 ci: setup build test
+
+local: build
+	rm -rf completions/dev
+	mkdir -p completions/dev
+	./bin/dbench completion fish > completions/dev/dbench.fish
+	sudo cp ./bin/dbench /usr/local/bin/dbench
+	sudo cp completions/dev/dbench.fish /usr/share/fish/vendor_completions.d/dbench.fish
 
 release:
 	NEXT=$$(svu n)

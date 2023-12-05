@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/nikoksr/dbench/internal/ui"
-	"github.com/nikoksr/dbench/internal/ui/styles"
+	"github.com/nikoksr/dbench/internal/ui/printer"
 )
 
 var (
@@ -21,64 +20,39 @@ You can either enter a password or set the PGPASSWORD environment variable:
 	export PGPASSWORD=supersecret
 
 For more information, see the official documentation:
-https://www.postgresql.org/docs/current/libpq-envars.html
-`)
+https://www.postgresql.org/docs/current/libpq-envars.html`)
 
-	errPgbenchNotInstalled = errors.New(`pgbench is required to run the application. It can be installed with the following command:
-
-	# Arch
-	sudo pacman -S postgresql
-
-	# Debian / Ubuntu
-	sudo apt install postgresql-client
-
-	# macOS
-	brew install postgresql
+	errPgbenchNotInstalled = errors.New(`pgbench is required to run the application.
 
 For more information, see the official documentation:
-https://www.postgresql.org/docs/current/pgbench.html
-`)
+https://www.postgresql.org/docs/current/pgbench.html`)
 
-	gnuPlotNotInstalledErr = fmt.Errorf(`gnuplot is required to run the application. It can be installed with the following command:
-
-	# Arch
-	sudo pacman -S gnuplot
-
-	# Debian / Ubuntu
-	sudo apt install gnuplot
-
-	# macOS
-	brew install gnuplot
+	errGNUPlotNotInstalled = fmt.Errorf(`gnuplot is required to run the application.
 
 For more information, see the official documentation:
-http://www.gnuplot.info/
-`)
+http://www.gnuplot.info/`)
 )
 
-func prepareDirectory(dir string) error {
-	// Clean directory path
-	dir = filepath.Clean(dir)
-
-	// Create output directory if it doesn't exist
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return fmt.Errorf("create output directory: %w", err)
-		}
+func isPathADirectory(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
 	}
 
-	return nil
+	return info.IsDir()
 }
 
-func getDBPassword() (string, bool, error) {
+func getDBPassword(p *printer.Printer) (string, bool, error) {
 	// Check if PGPASSWORD is set
 	passwd := os.Getenv("PGPASSWORD")
 
 	if passwd != "" {
-		fmt.Printf("%s\n\n", styles.Hint.Render("Detected PGPASSWORD - leave the following prompt empty to use it."))
+		p.PrintlnHint("Detected PGPASSWORD - leave the following prompt empty to use it.")
+		p.Spacer(1)
 	}
 
 	// Prompt for password
-	prompt := ui.NewPrompt("Enter database password:", "Password", true)
+	prompt := ui.NewPrompt(" Enter database password:", "Password", true)
 	if err := prompt.Render(); err != nil {
 		return "", false, err
 	}
@@ -126,4 +100,21 @@ func getToolVersion(tool string) (string, error) {
 	}
 
 	return version, nil
+}
+
+const (
+	defaultBatchSize = 5_000
+	maxBatchSize     = 25_000
+)
+
+func sanitizeBatchSize(batchSize int) int {
+	if batchSize <= 0 {
+		return defaultBatchSize
+	}
+
+	if batchSize > maxBatchSize {
+		return maxBatchSize
+	}
+
+	return batchSize
 }

@@ -32,7 +32,8 @@ func (BenchmarkMixin) Fields() []ent.Field {
 			Immutable(),
 		// An optional comment for the benchmark.
 		field.String("comment").
-			Optional(),
+			Optional().
+			Nillable(),
 		// Remaining fields are optional and cannot be changed once set.
 		field.String("version").
 			Optional().
@@ -55,12 +56,9 @@ func (BenchmarkMixin) Fields() []ent.Field {
 		field.Int("threads").
 			Optional().
 			Immutable(),
-		// The information about the system this benchmark was run on. Optional, as this feature is opt-in.
-		field.String("system_id").
-			GoType(pulid.ID("")).
-			Immutable().
-			Optional().
-			Nillable(),
+		field.Time("recorded_at").
+			Default(datetime.NowUTC).
+			Immutable(),
 	}
 }
 
@@ -87,24 +85,24 @@ func (Benchmark) Edges() []ent.Edge {
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Comment("The metrics that we collected from the system during the benchmark run."),
-		edge.From("system", SystemDetails.Type).
-			Ref("benchmarks").
-			Field("system_id").
+		edge.To("system", SystemConfig.Type).
 			Unique().
-			Immutable().
-			Comment("The system this benchmark was run on."),
+			Annotations(entsql.OnDelete(entsql.Cascade)).
+			Comment("The system config that was used for the benchmark run."),
 	}
 }
 
 // Indexes function defines the indexed fields for faster queries on the Benchmark schema.
 func (Benchmark) Indexes() []ent.Index {
 	return []ent.Index{
-		// Index the group_id column for faster lookups
-		// on benchmarks of a specific benchmark-group.
+		// Index group id and id for faster sorting of default queries.
+		index.Fields("group_id", "id"),
+		// Index group id for faster sorting of default queries.
 		index.Fields("group_id"),
-		// Index the clients column for faster lookups
-		// on benchmarks with a comparable number of clients.
+		// Index clients for faster sorting of default queries.
 		index.Fields("clients"),
+		// RecordedAt index for faster sorting of default queries.
+		index.Fields("recorded_at"),
 	}
 }
 

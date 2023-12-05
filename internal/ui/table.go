@@ -1,5 +1,3 @@
-// ui/table.go
-
 package ui
 
 import (
@@ -7,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	prettytext "github.com/jedib0t/go-pretty/v6/text"
 
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/ui/text"
 )
 
 //
-// FIXME: Move to bubbletea and implement Component interface.
+// FIXME: Move to bubbletea
 //
 
 var tableStyle table.Style
@@ -40,7 +39,7 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 	t.AppendHeader(table.Row{
 		"ID",
 		"Group ID",
-		"System ID",
+		"Machine ID",
 		"Comment",
 		"Clients",
 		"Threads",
@@ -48,21 +47,26 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 		"TPS",
 		"Avg. Latency",
 		"Conn Time",
-		"Created At",
+		"Recorded At",
 	})
 	for _, benchmark := range benchmarks {
+		var machineID *string
+		if benchmark.Edges.System != nil {
+			machineID = benchmark.Edges.System.MachineID
+		}
+
 		t.AppendRow(table.Row{
 			benchmark.ID,
 			benchmark.GroupID,
-			text.ValueOrNA(benchmark.SystemID),
-			benchmark.Comment,
+			text.Obfuscate(text.ValueOrNA(machineID)),
+			text.ValueOrNA(benchmark.Comment),
 			benchmark.Clients,
 			benchmark.Threads,
 			benchmark.Edges.Result.Transactions,
 			fmt.Sprintf("%.2f", benchmark.Edges.Result.TransactionsPerSecond),
 			benchmark.Edges.Result.AverageLatency,
 			benchmark.Edges.Result.ConnectionTime,
-			benchmark.CreatedAt.Local().Format("2006-01-02 15:04:05"),
+			benchmark.RecordedAt.Local().Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -73,10 +77,8 @@ func (r *BenchmarksTableRenderer) Render(benchmarks []*models.Benchmark) string 
 	t.SetAutoIndex(true)
 
 	t.SetColumnConfigs([]table.ColumnConfig{
-		{
-			Name:     "Comment",
-			WidthMax: 30,
-		},
+		{Name: "Comment", WidthMax: 30},
+		{Name: "TPS", Align: prettytext.AlignRight},
 	})
 
 	// Render the table.

@@ -29,7 +29,8 @@ func (m Mixin) Fields() []ent.Field {
 			GoType(ID("")).
 			DefaultFunc(func() ID { return MustNew(m.prefix) }).
 			Unique().
-			Immutable(),
+			Immutable().
+			NotEmpty(),
 	}
 }
 

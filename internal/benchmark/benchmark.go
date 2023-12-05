@@ -14,9 +14,9 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/nikoksr/dbench/ent/schema/duration"
+	"github.com/nikoksr/dbench/internal/events"
 	"github.com/nikoksr/dbench/internal/models"
 	"github.com/nikoksr/dbench/internal/system"
-	"github.com/nikoksr/dbench/internal/ui/styles"
 )
 
 // parseDuration converts a string like "5.359 ms" or "1.2 s" to a time.Duration.
@@ -127,6 +127,11 @@ func roundToTwoDecimals(f float64) float64 {
 	return float64(int(f*100)) / 100
 }
 
+const (
+	InitCommandRunning events.EventType = "init_command_running"
+	RunCommandRunning  events.EventType = "run_command_running"
+)
+
 // Run executes the pgbench command with the provided configuration
 func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark, error) {
 	// Fill the config with default values
@@ -215,8 +220,13 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 	}()
 
 	// Execute pgbench
-	fmt.Printf("  %s\t", styles.Info.Render("Running command: "+cmd.String()))
 	eg.Go(func() error {
+		// Execute the command
+		events.PublishEvent(events.Event{
+			Type:    RunCommandRunning,
+			Message: cmd.String(),
+		})
+
 		err := cmd.Run()
 		close(stopChan) // Stop system monitoring
 		return err
@@ -224,11 +234,8 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 
 	// Wait for the group to finish
 	if err := eg.Wait(); err != nil {
-		fmt.Println(styles.Error.Render("✗ Failed"))
 		return nil, fmt.Errorf("%w: %s", err, stderr.String())
 	}
-
-	fmt.Println(styles.Success.Render("✓ Success"))
 
 	// Parse the pgbench output
 	output := stdout.String()
@@ -267,8 +274,10 @@ func Run(ctx context.Context, config *models.BenchmarkConfig) (*models.Benchmark
 	// Add the missing pieces to the benchmark
 
 	// Store meta information
-	benchmark.Comment = config.Comment
 	benchmark.Command = cmd.String()
+	if config.Comment != "" {
+		benchmark.Comment = &config.Comment
+	}
 
 	// Store the system metrics
 	benchmark.Edges.SystemMetric = metrics
@@ -305,15 +314,15 @@ func Init(config *models.BenchmarkConfig) error {
 	cmd.Stderr = &stderr
 
 	// Execute the command
-	fmt.Printf("  %s\t", styles.Info.Render("Running command: "+cmd.String()))
+	events.PublishEvent(events.Event{
+		Type:    InitCommandRunning,
+		Message: cmd.String(),
+	})
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(styles.Error.Render("✗ Failed\n"))
 		return fmt.Errorf("%w: %s", err, stderr.String())
 	}
-
-	fmt.Println(styles.Success.Render("✓ Success\n"))
 
 	return nil
 }

@@ -7,17 +7,27 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/nikoksr/dbench/internal/export"
+	"github.com/nikoksr/dbench/cmd/cobrax"
+	"github.com/nikoksr/dbench/internal/build"
+	"github.com/nikoksr/dbench/internal/database"
+	"github.com/nikoksr/dbench/internal/fs"
 	"github.com/nikoksr/dbench/internal/plot"
-	"github.com/nikoksr/dbench/internal/store"
-	"github.com/nikoksr/dbench/internal/ui/styles"
+	"github.com/nikoksr/dbench/internal/portability/converter"
+	"github.com/nikoksr/dbench/internal/portability/exporter"
+	"github.com/nikoksr/dbench/internal/ui/printer"
 )
 
-func newPlotCommand() *cobra.Command {
-	var (
-		outputDir      string
-		cleanOutputDir bool
-	)
+type plotOptions struct {
+	*globalOptions
+
+	outputDir      string
+	cleanOutputDir bool
+}
+
+func newPlotCommand(globalOpts *globalOptions, connectToDB dbConnector) *cobra.Command {
+	opts := &plotOptions{
+		globalOptions: globalOpts,
+	}
 
 	cmd := &cobra.Command{
 		Use:                   "plot [OPTIONS] BENCHMARK-GROUP-ID [BENCHMARK-GROUP-ID...]",
@@ -28,70 +38,70 @@ func newPlotCommand() *cobra.Command {
 		SilenceErrors:         true,
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(1),
-		ValidArgsFunction:     cobra.NoFileCompletions,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check if gnuplot is installed
-			if !isToolInPath("gnuplot") {
-				return gnuPlotNotInstalledErr
+		PreRunE:               cobrax.HooksE(gnuplotInstalledHook()),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			db, err := connectToDB(cmd.Context(), opts.dataDir, opts.noMigration, fs.OSFileSystem{})
+			if err != nil {
+				return fmt.Errorf("connect to database: %w", err)
 			}
 
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+			// Print header
+			p := printer.NewPrinter(cmd.OutOrStdout(), 50)
+			p.PrintlnTitle("Plotting")
+			p.PrintlnSubTitle("Preparation")
+
 			// Get benchmark-group IDs
 			benchmarkGroupIDs := args
 
 			// Cleanup output directory
-			if cleanOutputDir {
-				fmt.Printf("%s\n", styles.Title.Render("Cleanup"))
-				msg := fmt.Sprintf("Cleaning output directory (%s)", outputDir)
-				fmt.Printf("%s\t", styles.Info.Render(msg))
-				if err := os.RemoveAll(outputDir); err != nil {
-					fmt.Printf("%s\n", styles.Error.Render("✗ Failed"))
+			if opts.cleanOutputDir {
+				p.PrintInfo(" Cleaning output directory ... ", printer.WithIndent())
+				if err := os.RemoveAll(opts.outputDir); err != nil {
+					p.PrintlnError(err.Error())
 					return fmt.Errorf("cleanup output directory: %w", err)
 				}
-				fmt.Printf("%s\n", styles.Success.Render("✓ Success"))
+				p.PrintlnSuccess("")
 			}
 
 			// Prepare output directory
-			if err := prepareDirectory(outputDir); err != nil {
-				return fmt.Errorf("prepare output directory: %w", err)
+			p.PrintInfo(" Creating plots directory ... ", printer.WithIndent())
+			if err := os.MkdirAll(opts.outputDir, 0o755); err != nil {
+				p.PrintlnError(err.Error())
+				return fmt.Errorf("create plots directory: %w", err)
 			}
+			p.PrintlnSuccess("")
 
 			// Plot benchmarks
-			fmt.Printf("%s\n", styles.Title.Render("Plotting"))
-			fmt.Printf("%s\n\n", styles.Text.Render("Plotting benchmark-groups"))
+			p.Spacer(1)
+			p.PrintlnSubTitle("Plotting")
 			for _, id := range benchmarkGroupIDs {
-				fmt.Printf("  %s\t", styles.Info.Render("Plotting "+id))
-				if err := plotBenchmarks(cmd.Context(), id, outputDir); err != nil {
-					fmt.Printf("  %s\n", styles.Error.Render("✗ Failed"))
+				p.PrintInfo(" Plotting "+id+" ... ", printer.WithIndent())
+				if err := plotBenchmarks(cmd.Context(), db, id, opts.outputDir); err != nil {
+					p.PrintlnError(err.Error())
 					return fmt.Errorf("plot benchmark-group %q: %w", id, err)
 				}
-				fmt.Printf("  %s\n", styles.Success.Render("✓ Success"))
+				p.PrintlnSuccess("")
 			}
 
-			title := styles.Title.Render("Results")
-			message := fmt.Sprintf("%s:\n\n $ cd %s", styles.Text.Render("Plotting done! Check out the results in the output directory"), outputDir)
-			fmt.Printf("%s\n%s\n\n", title, message)
+			p.Spacer(2)
+			p.PrintText(" Complete! Saved plots to ")
+			p.PrintlnHighlight(opts.outputDir)
+			p.Spacer(2)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVarP(&outputDir, "output", "o", "dbench/plots", "Output directory for plots")
-	cmd.Flags().BoolVarP(&cleanOutputDir, "clean", "c", false, "Cleanup output directory before plotting")
+	cmd.Flags().StringVarP(&opts.outputDir, "output", "o", "dbench/plots", "Output directory for plots")
+	cmd.Flags().BoolVarP(&opts.cleanOutputDir, "clean", "c", false, "Cleanup output directory before plotting")
+
+	cmd.Flags().SortFlags = false
 
 	return cmd
 }
 
-func plotBenchmarks(ctx context.Context, id, outputDir string) error {
-	dbenchDB, err := store.New(ctx, dbenchDSN)
-	if err != nil {
-		return fmt.Errorf("create dbench database: %w", err)
-	}
-	defer dbenchDB.Close()
-
-	benchmarks, err := dbenchDB.FetchByGroupIDs(ctx, []string{id})
+func plotBenchmarks(ctx context.Context, db database.Store, id, outputDir string) error {
+	benchmarks, err := db.FetchByGroupIDs(ctx, []string{id})
 	if err != nil {
 		return fmt.Errorf("fetch benchmarks by benchmark-group ID: %w", err)
 	}
@@ -100,13 +110,29 @@ func plotBenchmarks(ctx context.Context, id, outputDir string) error {
 		return fmt.Errorf("no benchmarks found for benchmark-group %q", id)
 	}
 
-	dataFile, err := export.ToCSV(benchmarks, "")
+	// Create temp file for CSV data
+	file, err := os.CreateTemp("", build.AppName+"-*.csv")
 	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+
+	// Save temp file name for plotting and cleanup
+	fileName := file.Name()
+	defer func() {
+		_ = file.Close()
+		_ = os.Remove(fileName)
+	}()
+
+	// Convert benchmarks to CSV export format
+	exportable := converter.BenchmarksToCSV(benchmarks)
+
+	// Export benchmarks to CSV
+	if err := exporter.ToCSV(file, exportable); err != nil {
 		return fmt.Errorf("export benchmarks to CSV: %w", err)
 	}
 
 	// Generate plots using gnuplot
-	if err := plot.Plot(ctx, dataFile, outputDir); err != nil {
+	if err := plot.Plot(ctx, fileName, outputDir); err != nil {
 		return fmt.Errorf("plot benchmarks: %w", err)
 	}
 

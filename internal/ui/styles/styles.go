@@ -2,32 +2,57 @@ package styles
 
 import "github.com/charmbracelet/lipgloss"
 
-var (
-	Title = lipgloss.NewStyle().
+func Title() lipgloss.Style {
+	return lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#f8f8f2")).
 		Border(lipgloss.RoundedBorder(), false, false, true, false).
 		Margin(2, 0, 1, 0)
+}
 
-	SubTitle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("#f8f8f2"))
-
-	Text = lipgloss.NewStyle().
+func SubTitle() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Bold(true).
 		Foreground(lipgloss.Color("#f8f8f2"))
+}
 
-	Hint = lipgloss.NewStyle().
+func Text() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#f8f8f2"))
+}
+
+func Hint() lipgloss.Style {
+	return lipgloss.NewStyle().
+		// Light gray
+		Foreground(lipgloss.Color("#abb2bf")).
 		Faint(true)
+}
 
-	Success = lipgloss.NewStyle().
+func Highlight() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Bold(true)
+}
+
+func Success() lipgloss.Style {
+	return lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#50fa7b"))
+}
 
-	Error = lipgloss.NewStyle().
+func Error() lipgloss.Style {
+	return lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#ff5555"))
+}
 
-	Info = lipgloss.NewStyle().
+func Warn() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFCC66"))
+}
+
+func Info() lipgloss.Style {
+	return lipgloss.NewStyle().
 		Italic(true).
 		Foreground(lipgloss.Color("#abb2bf"))
-)
+}

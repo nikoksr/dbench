@@ -16,6 +16,7 @@ completions/
 *.db
 *.png
 *.dat
+*.zst
 
 todo.md
 

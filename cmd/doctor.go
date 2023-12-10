@@ -48,13 +48,14 @@ Enabling the --system flag, dbench will show you the exact system config that wo
 			}
 
 			// Print header
-			p := printer.NewPrinter(cmd.OutOrStdout(), 30)
+			p := printer.NewPrinter(cmd.OutOrStdout(), 40)
 			p.PrintlnTitle(fmt.Sprintf("%s %s", build.AppName, build.Version))
 
 			// Check dbench database
 			p.PrintlnSubTitle("Database")
 			p.PrintInfo(" Connecting ... ", printer.WithIndent())
 			p.PrintlnSuccess(connDuration.String())
+
 			p.PrintInfo(" Counting database records ... ", printer.WithIndent())
 			count, err := db.CountAll(cmd.Context())
 			if err != nil {

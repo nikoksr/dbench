@@ -4,6 +4,7 @@ tmp/
 
 bin/
 dist/
+dbench/
 completions/
 
 # Files
